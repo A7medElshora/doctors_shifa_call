@@ -1,0 +1,17 @@
+default_platform(:android)
+
+platform :android do
+  desc "Lane for Andriod Firebase App Distribution"
+  lane :firebase_distribution do
+    sh "flutter clean"
+    sh "flutter build apk --release --flavor production --target lib/main_production.dart --no-tree-shake-icons"
+    firebase_app_distribution(
+    app: "1:405478207570:android:c8758d7cac1b8453c2af8b",
+    firebase_cli_token: "1//094O7X8hoVBzwCgYIARAAGAkSNwF-L9IriDDMY2yqsxej4HnT7XvkJr9KB75f43pfBuxyPnGsJ-huDw9sbWGrLLSM44Qs6t-YFd8",
+    android_artifact_type: "APK",
+    android_artifact_path: "../build/app/outputs/flutter-apk/app-production-release.apk",
+    groups: "doctors_shifa_call",
+    release_notes: "Crate First Release doctors_shifa_call With Firebase App Distribution",
+  )
+  end
+end

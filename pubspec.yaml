@@ -1,0 +1,102 @@
+name: doctors_shifa_call
+description: "A new Flutter project."
+
+publish_to: 'none'
+
+version: 1.0.0+4
+
+environment:
+  sdk: '>=3.4.4 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # ------------ Icons ------------
+  cupertino_icons: ^1.0.6
+
+  # ------------ UI --------------
+  flutter_screenutil: ^5.9.3
+  google_fonts: ^6.2.1
+  modal_progress_hud_nsn: ^0.5.1
+  carousel_slider: ^5.0.0
+  skeletonizer: ^2.0.1
+
+  # تمّ خفض إصدار fluttertoast لحل تعارض web
+  # fluttertoast: ^8.2.8
+  oktoast: ^3.4.0
+
+  # ------------ Images ------------
+  flutter_svg: ^2.0.10+1
+  image_picker: ^1.1.2
+
+  # ------------ Animations ------------
+  lottie: ^3.1.2
+
+  # ------------ Firebase ----------
+  firebase_core: ^3.4.0
+  firebase_remote_config: ^5.1.0
+  firebase_crashlytics: ^4.1.0
+  firebase_messaging: ^15.1.0
+
+  # ---------- Local Storage ----------
+  shared_preferences: ^2.3.2
+
+  # --------- State Management ---------
+  flutter_bloc: ^9.1.1
+  get_it: ^8.0.3
+  freezed: ^3.0.6
+  freezed_annotation: ^3.0.0
+  json_serializable: ^6.8.0
+  json_annotation: ^4.9.0
+  build_runner: ^2.4.12
+  package_info_plus: ^8.0.2
+
+  # ----------- Network --------------
+  dio: ^5.7.0
+  pretty_dio_logger: ^1.4.0
+  retrofit: ^4.4.1
+  retrofit_generator: ^9.1.2
+  connectivity_plus: ^6.0.5
+  cached_network_image: ^3.3.1
+  url_launcher: ^6.3.0
+  fancy_shimmer_image: ^2.0.3
+
+  # ------------ Utils --------------
+  easy_localization: ^3.0.7
+  intl: ^0.20.2
+  awesome_notifications: ^0.10.1
+  photo_view: ^0.15.0
+  circular_countdown_timer: ^0.2.4
+
+  # ------------ Security -------------
+  flutter_secure_storage: ^9.2.2
+
+  # ------------ Stream --------------
+  signalr_core: ^1.1.2
+  geocoding: ^4.0.0
+  flutter_local_notifications: ^19.2.1
+  geolocator: ^12.0.0
+  smooth_page_indicator: ^1.2.1
+  escape_parent_padding: ^1.0.4
+  animated_bottom_navigation_bar: ^1.4.0
+  webview_flutter: ^4.13.0
+  webview_flutter_android: ^4.7.0
+  webview_flutter_wkwebview: ^3.22.0
+  image_cropper: ^9.1.0
+  fluttertoast: ^8.2.8
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/images/
+    - assets/images/svgs/
+    - assets/translations/
+    - assets/animations/

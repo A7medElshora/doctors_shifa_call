@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "405478207570",
+    "project_id": "doctors_shifa_call-f2ce2",
+    "storage_bucket": "doctors_shifa_call-f2ce2.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:405478207570:android:c8758d7cac1b8453c2af8b",
+        "android_client_info": {
+          "package_name": "com.touriest.doctors_shifa_call"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBYm7atk5QMnKPDUJ86l_HFkiUse0upy9k"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
