@@ -6,7 +6,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-
 import 'core/services/locator/get_it_locator.dart';
 import 'core/utils/cache/cache_helper.dart';
 
@@ -18,10 +17,8 @@ Future<void> initializeApp() async {
   ]);
 
   await CacheHelper.init();
-
   ServicesLocator.setup();
   await ScreenUtil.ensureScreenSize();
-  // print\(.*?\);
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );

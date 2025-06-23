@@ -1,22 +1,30 @@
 import 'package:flutter/material.dart';
-import 'package:fluttertoast/fluttertoast.dart';
+import 'package:oktoast/oktoast.dart';
 
 enum ToastedStates { success, error, warning, info }
 
-showToast({
+void showToast({
   required String msg,
   required ToastedStates state,
-  ToastGravity gravity = ToastGravity.TOP,
-  Toast toastLength = Toast.LENGTH_LONG,
+  ToastPosition position = ToastPosition.top,
+  Duration duration = const Duration(seconds: 5),
 }) {
-  Fluttertoast.showToast(
-    msg: msg,
-    toastLength: toastLength,
-    gravity: gravity,
-    timeInSecForIosWeb: 5,
-    backgroundColor: chooseToastColor(state),
-    textColor: Colors.white,
-    fontSize: 16.0,
+  showToastWidget(
+    Container(
+      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),
+      margin: const EdgeInsets.symmetric(horizontal: 40.0),
+      decoration: BoxDecoration(
+        color: chooseToastColor(state),
+        borderRadius: BorderRadius.circular(8.0),
+      ),
+      child: Text(
+        msg,
+        style: const TextStyle(color: Colors.white, fontSize: 16.0),
+      ),
+    ),
+    position: position,
+    duration: duration,
+    dismissOtherToast: true,
   );
 }
 

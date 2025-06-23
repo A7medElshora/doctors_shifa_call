@@ -66,16 +66,16 @@ class AppStyle {
     fontWeight: FontWeight.w400,
   );
 
-  static InputBorder borderDone() {
+  static InputBorder borderDone({Color? color}) {
     return OutlineInputBorder(
-      borderSide: const BorderSide(color: AppColor.secondaryColor),
+      borderSide:  BorderSide(color: color?? AppColor.containerColor),
       borderRadius: BorderRadius.circular(8),
     );
   }
 
-  static InputBorder borderFocuse() {
+  static InputBorder borderFocuse({Color? color}) {
     return OutlineInputBorder(
-      borderSide: const BorderSide(color: AppColor.secondaryColor),
+      borderSide: const BorderSide(color: AppColor.containerColor),
       borderRadius: BorderRadius.circular(8),
     );
   }
