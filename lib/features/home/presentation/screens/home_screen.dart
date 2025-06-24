@@ -12,7 +12,7 @@ class HomeScreen extends StatelessWidget {
 
   const HomeScreen({
     super.key,
-    required this.username, // pass the current user’s name, e.g. "Anas"
+    required this.username, 
   });
 
   @override
@@ -57,8 +57,8 @@ class HomeScreen extends StatelessWidget {
                         0.9, // adjust as needed to get roughly square cards
                     children: [
                       _HomeCard(
-                        iconWidget: SvgPicture.asset(
-                          'assets/images/svgs/work_hour.svg',
+                        iconWidget: Image.asset(
+                          'assets/images/svgs/work_hour.png',
                           width: 60.w,
                           height: 60.w,
                         ),
@@ -89,8 +89,8 @@ class HomeScreen extends StatelessWidget {
                         },
                       ),
                       _HomeCard(
-                        iconWidget: SvgPicture.asset(
-                          'assets/images/svgs/file_patient.svg',
+                        iconWidget: Image.asset(
+                          'assets/images/svgs/patient_file.png',
                           width: 60.w,
                           height: 60.w,
                         ),
@@ -101,8 +101,8 @@ class HomeScreen extends StatelessWidget {
                         },
                       ),
                       _HomeCard(
-                        iconWidget: SvgPicture.asset(
-                          'assets/images/svgs/setting_icon.svg',
+                        iconWidget: Image.asset(
+                          'assets/images/svgs/settings.png',
                           width: 60.w,
                           height: 60.w,
                         ),
