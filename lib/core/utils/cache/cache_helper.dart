@@ -4,39 +4,30 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class CacheHelper {
   static late SharedPreferences sharedPreferences;
+  static const String _loginStatusKey = 'isLoggedIn';
+  static const String _tokenKey = 'authToken';
 
-  // ignore: always_declare_return_types
-  static init() async {
+  // تهيئة SharedPreferences
+  static Future<void> init() async {
     sharedPreferences = await SharedPreferences.getInstance();
   }
 
+  // مسح جميع البيانات من SharedPreferences
   static Future<bool> clear() async {
     return await sharedPreferences.clear();
   }
 
-  static Future<bool> putBool({
-    required String key,
-    required bool value,
-  }) async {
-    return await sharedPreferences.setBool(key, value);
+  // حفظ حالة تسجيل الدخول
+  static Future<bool> setLoginStatus(bool isLoggedIn) async {
+    return await sharedPreferences.setBool(_loginStatusKey, isLoggedIn);
   }
 
-  static String getString({
-    required String key,
-  }) {
-    return sharedPreferences.getString(key) ?? '';
+  // استرجاع حالة تسجيل الدخول
+  static bool getLoginStatus() {
+    return sharedPreferences.getBool(_loginStatusKey) ?? false;
   }
 
-  static int getInteger({
-    required String key,
-  }) {
-    return sharedPreferences.getInt(key) ?? 0;
-  }
-
-  static bool getBool({required String key}) {
-    return sharedPreferences.getBool(key) ?? false;
-  }
-
+  // حفظ البيانات العامة
   static Future<bool> saveData({
     required String key,
     required dynamic value,
@@ -52,37 +43,77 @@ class CacheHelper {
     }
   }
 
+  // إزالة بيانات من SharedPreferences
   static Future<bool> removeData({
     required String key,
   }) async {
     return await sharedPreferences.remove(key);
   }
 
-  // set secured string
-  static setSecureStorge({
+  // حفظ البيانات الحساسة في FlutterSecureStorage
+  static Future<void> setSecureStorage({
     required String key,
     required String value,
   }) async {
-    debugPrint('flutterSecureStorage setSecureStorge with key : $key and value : $value');
+    debugPrint('flutterSecureStorage setSecureStorage with key: $key and value: $value');
     const flutterSecureStorage = FlutterSecureStorage();
     await flutterSecureStorage.write(key: key, value: value);
   }
 
-  // get secured string
-  static Future<String?> getSecureStorge({
+  // استرجاع البيانات الحساسة
+  static Future<String?> getSecureStorage({
     required String key,
   }) async {
-    
     const flutterSecureStorage = FlutterSecureStorage();
-    return await flutterSecureStorage.read(key: key) ?? '';
+    return await flutterSecureStorage.read(key: key);
   }
 
-  // delete secured string
-  static deleteSecureStorge({
+  // حذف البيانات الحساسة
+  static Future<void> deleteSecureStorage({
     required String key,
   }) async {
-    debugPrint('flutterSecureStorage deleteSecureStorge with key : $key');
+    debugPrint('flutterSecureStorage deleteSecureStorage with key: $key');
     const flutterSecureStorage = FlutterSecureStorage();
     await flutterSecureStorage.delete(key: key);
   }
+
+  // حفظ الرمز المميز عند تسجيل الدخول
+  static Future<void> saveToken(String token) async {
+    await setSecureStorage(key: _tokenKey, value: token);
+  }
+
+  // استرجاع الرمز المميز
+  static Future<String?> getToken() async {
+    return await getSecureStorage(key: _tokenKey);
+  }
+
+  // مسح الرمز المميز عند تسجيل الخروج
+  static Future<void> clearToken() async {
+    await deleteSecureStorage(key: _tokenKey);
+  }
+
+  // دالة تسجيل الدخول
+  static Future<void> login(String token) async {
+    await saveToken(token);
+    await setLoginStatus(true);
+  }
+
+  // دالة تسجيل الخروج
+  static Future<void> logout() async {
+    await clearToken();
+    await setLoginStatus(false);
+  }
+
+   static String getString({
+    required String key,
+  }) {
+    return sharedPreferences.getString(key) ?? '';
+  }
+
+  static int getInteger({
+    required String key,
+  }) {
+    return sharedPreferences.getInt(key) ?? 0;
+  }
+
 }

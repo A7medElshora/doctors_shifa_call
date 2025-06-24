@@ -1,10 +1,13 @@
+import 'dart:async';
+import 'dart:io';
+
+import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:doctors_shifa_call/core/utils/cache/cache_helper.dart';
 import 'package:doctors_shifa_call/features/auth/presentation/screens/loginScreen/login_screen.dart';
+import 'package:doctors_shifa_call/features/home/presentation/screens/home_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
-
-// Import your LoginScreen here
-// import 'package:your_app/features/auth/presentation/screens/login_screen/login_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -14,17 +17,38 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen> {
+  Future<void> _navigateNext() async {
+    // انتظر مدة قصيرة حتى يظهر الـ Splash
+    await Future.delayed(const Duration(seconds: 3));
+
+    // تحقق من الاتصال بالإنترنت
+    final connectivityResult = await Connectivity().checkConnectivity();
+    final bool isOnline = connectivityResult != ConnectivityResult.none;
+
+    // تحقق من حالة تسجيل الدخول
+    final bool isLoggedIn = CacheHelper.getLoginStatus();
+
+    if (isOnline && isLoggedIn) {
+      // استرجع اسم المستخدم المسجل
+      final String username = CacheHelper.getString(key: 'username') ?? '';
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(
+          builder: (_) => HomeScreen(username: username),
+        ),
+      );
+    } else {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(
+          builder: (_) => LoginScreen(isOnline: isOnline),
+        ),
+      );
+    }
+  }
+
   @override
   void initState() {
     super.initState();
-    Future.delayed(const Duration(seconds: 5), () {
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(
-          builder: (context) => LoginScreen(
-              isOnline: false), // Provide the required isOnline argument
-        ),
-      );
-    });
+    _navigateNext();
   }
 
   @override
@@ -70,6 +94,7 @@ class _SplashScreenState extends State<SplashScreen> {
                 fit: BoxFit.fill,
               ),
             ),
+            // شعار التطبيق في الوسط
             Center(
               child: SvgPicture.asset(
                 'assets/images/svgs/white_logo.svg',

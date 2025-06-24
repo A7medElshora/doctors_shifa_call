@@ -1,4 +1,5 @@
 import 'package:carousel_slider/carousel_slider.dart';
+import 'package:doctors_shifa_call/core/utils/constant/app_color.dart';
 import 'package:doctors_shifa_call/core/utils/widgets/custom_app_bar_widget.dart';
 import 'package:doctors_shifa_call/core/utils/widgets/custom_nav_bar_widget.dart';
 import 'package:doctors_shifa_call/features/home/presentation/widgets/bookings_screen.dart';
@@ -12,7 +13,7 @@ class HomeScreen extends StatelessWidget {
 
   const HomeScreen({
     super.key,
-    required this.username, 
+    required this.username,
   });
 
   @override
@@ -42,6 +43,28 @@ class HomeScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                SizedBox(height: 16.h),
+                // إضافة عبارة الترحيب
+                RichText(
+                  text: TextSpan(
+                    style: TextStyle(
+                      fontSize: 20.sp,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
+                    children: [
+                      const TextSpan(text: ' مرحبا بك , كيف حالك يا  '),
+                      TextSpan(
+                        text: username,
+                        style: TextStyle(
+                            color: AppColor.primaryColor // green color
+                            ),
+                      ),
+                      const TextSpan(text: ' ؟'),
+                    ],
+                  ),
+                ),
+
                 SizedBox(height: 16.h),
                 // Carousel/banner
                 CarouselWidget(),
