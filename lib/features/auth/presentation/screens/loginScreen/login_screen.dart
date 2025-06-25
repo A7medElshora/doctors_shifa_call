@@ -31,7 +31,6 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   void initState() {
     super.initState();
-    // التحقق من حالة تسجيل الدخول عند تهيئة الشاشة
     context.read<AuthCubit>().checkLoginStatus();
   }
 
@@ -196,7 +195,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                           });
                                         },
                                       ),
-                                      prefixIcon: Padding(
+                                      prefix: Padding(
                                         padding: EdgeInsetsDirectional.only(
                                             start: 16.sp),
                                         child: SvgPicture.asset(

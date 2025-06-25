@@ -1,2 +1,2 @@
 
-export 'data/models/services_model.dart';
+// export 'data/models/services_model.dart';

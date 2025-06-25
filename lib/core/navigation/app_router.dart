@@ -14,10 +14,19 @@ class AppRouter {
             return const SplashScreen();
           },
         );
-        case homeScreen:
+      case homeScreen:
         return MaterialPageRoute(
           builder: (_) {
-            return HomeScreen(username: arguments != null && arguments is String ? arguments : '');
+            String username = '';
+            String doctorId = '';
+            if (arguments != null && arguments is Map<String, String>) {
+              username = arguments['username'] ?? '';
+              doctorId = arguments['doctorId'] ?? '';
+            }
+            return HomeScreen(
+              username: username,
+              doctorId: doctorId,
+            );
           },
         );
     }

@@ -10,22 +10,21 @@ import 'package:flutter_svg/svg.dart';
 
 class HomeScreen extends StatelessWidget {
   final String username;
+  final String doctorId; // تم إضافة doctorId كمعامل
 
   const HomeScreen({
     super.key,
     required this.username,
+    required this.doctorId,
   });
 
   @override
   Widget build(BuildContext context) {
-    // Ensure ScreenUtil is initialized in your app (e.g. in top-level widget).
-    // Also ensure that the app’s locale/textDirection is set to RTL for Arabic.
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        // Use your CustomAppBar:
         appBar: PreferredSize(
-          preferredSize: const Size.fromHeight(60),
+          preferredSize: Size.fromHeight(60.h),
           child: CustomAppBar(
             showBell: true,
             showUserIcon: true,
@@ -36,7 +35,6 @@ class HomeScreen extends StatelessWidget {
             onGridPressed: () {},
           ),
         ),
-
         body: SafeArea(
           child: Padding(
             padding: EdgeInsets.symmetric(horizontal: 16.w),
@@ -44,7 +42,6 @@ class HomeScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 SizedBox(height: 16.h),
-                // إضافة عبارة الترحيب
                 RichText(
                   text: TextSpan(
                     style: TextStyle(
@@ -56,28 +53,21 @@ class HomeScreen extends StatelessWidget {
                       const TextSpan(text: ' مرحبا بك , كيف حالك يا  '),
                       TextSpan(
                         text: username,
-                        style: TextStyle(
-                            color: AppColor.primaryColor // green color
-                            ),
+                        style: TextStyle(color: AppColor.primaryColor),
                       ),
                       const TextSpan(text: ' ؟'),
                     ],
                   ),
                 ),
-
                 SizedBox(height: 16.h),
-                // Carousel/banner
                 CarouselWidget(),
                 SizedBox(height: 24.h),
-                // Grid of 4 cards
-                // We wrap in Expanded so it takes remaining space; if content might overflow, you can use SingleChildScrollView instead.
                 Expanded(
                   child: GridView.count(
                     crossAxisCount: 2,
                     mainAxisSpacing: 23.h,
                     crossAxisSpacing: 16.w,
-                    childAspectRatio:
-                        0.9, // adjust as needed to get roughly square cards
+                    childAspectRatio: 0.9,
                     children: [
                       _HomeCard(
                         iconWidget: Image.asset(
@@ -91,7 +81,8 @@ class HomeScreen extends StatelessWidget {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                                builder: (_) => const WorkHoursScreen()),
+                              builder: (_) => WorkHoursScreen(doctorId: doctorId),
+                            ),
                           );
                         },
                       ),
@@ -107,7 +98,8 @@ class HomeScreen extends StatelessWidget {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                                builder: (_) => const BookingsScreen()),
+                              builder: (_) => const BookingsScreen(),
+                            ),
                           );
                         },
                       ),
@@ -120,7 +112,7 @@ class HomeScreen extends StatelessWidget {
                         title: 'المرضى',
                         subtitle: 'معرفة معلومات عن المرضى و مواعيد حجزهم',
                         onTap: () {
-                          // Navigate to patients page
+                          // تنقل إلى صفحة المرضى (يمكن إضافته لاحقًا)
                         },
                       ),
                       _HomeCard(
@@ -132,7 +124,7 @@ class HomeScreen extends StatelessWidget {
                         title: 'الإعدادات',
                         subtitle: 'حجز مواعيدك في العيادة',
                         onTap: () {
-                          // Navigate to settings
+                          // تنقل إلى صفحة الإعدادات (يمكن إضافته لاحقًا)
                         },
                       ),
                     ],
@@ -142,15 +134,12 @@ class HomeScreen extends StatelessWidget {
             ),
           ),
         ),
-
-        // Bottom navigation bar
         bottomNavigationBar: const BottomNavBarWidget(),
       ),
     );
   }
 }
 
-/// A reusable card widget for each Home option.
 class _HomeCard extends StatelessWidget {
   final Widget iconWidget;
   final String title;
@@ -170,7 +159,6 @@ class _HomeCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        // Card styling similar to screenshot: white bg, rounded corners, slight shadow
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16.r),
@@ -186,7 +174,6 @@ class _HomeCard extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Icon or image
             iconWidget,
             SizedBox(height: 12.h),
             Text(
@@ -212,7 +199,6 @@ class _HomeCard extends StatelessWidget {
     );
   }
 }
-// carousel_widget.dart
 
 class CarouselWidget extends StatefulWidget {
   const CarouselWidget({super.key});

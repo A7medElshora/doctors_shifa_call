@@ -1,68 +1,70 @@
-// work_hours_screen.dart
+import 'package:doctors_shifa_call/core/utils/cache/cache_helper.dart';
+import 'package:doctors_shifa_call/features/home/presentation/cubits/work_hour/work_hours_cubit.dart';
+import 'package:doctors_shifa_call/features/home/presentation/cubits/work_hour/work_hours_state.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:flutter_svg/svg.dart';
-
-// تأكد من مسار الاستيراد حسب مشروعك:
 import 'package:doctors_shifa_call/core/utils/widgets/custom_app_bar_widget.dart';
 import 'package:doctors_shifa_call/core/utils/widgets/custom_nav_bar_widget.dart';
 
 class WorkHoursScreen extends StatefulWidget {
-  const WorkHoursScreen({Key? key}) : super(key: key);
+  final String doctorId;
+
+  const WorkHoursScreen({super.key, required this.doctorId});
 
   @override
   State<WorkHoursScreen> createState() => _WorkHoursScreenState();
 }
 
 class _WorkHoursScreenState extends State<WorkHoursScreen> {
-  // قائمة أيام الأسبوع بالترتيب
-  final List<String> _days = const [
-    'السبت',
-    'الأحد',
-    'الاثنين',
-    'الثلاثاء',
-    'الأربعاء',
-    'الخميس',
-    'الجمعة',
-  ];
+  String? _selectedDayNumber;
+  final Set<String> _selectedTimes = {};
+  late String _effectiveDoctorId;
 
-  int _selectedDayIndex = 0;
-
-  // قائمة ساعات العمل المتاحة: مثال عشوائي. استبدل بالقيم الحقيقية من الـ backend أو المنطق لديك.
-  final List<String> _timeSlots = const [
-    '12:10 م',
-    '12:20 م',
-    '12:30 م',
-    '12:00 م',
-    '03:00 م',
-    '03:10 م',
-    '02:50 م',
-    '04:00 م',
-    '01:30 م',
-    '03:40 م',
-    '05:00 م',
-    // يمكنك إضافة أو إزالة أو جلب هذه القائمة ديناميكياً بحسب اليوم المختار.
-  ];
-
-  String? _selectedTime; // الوقت المختار
+  @override
+  void initState() {
+    super.initState();
+    // Validate doctorId and fallback to CacheHelper
+    _effectiveDoctorId = widget.doctorId;
+    print('WorkHoursScreen: Initial doctorId=${widget.doctorId}');
+    if (_effectiveDoctorId == '0' || _effectiveDoctorId.isEmpty) {
+      final cachedDoctorId =
+          CacheHelper.getInteger(key: 'doctor_id').toString();
+      print(
+          'WorkHoursScreen: Invalid doctorId, using cachedDoctorId=$cachedDoctorId');
+      if (cachedDoctorId == '0' || cachedDoctorId.isEmpty) {
+        print(
+            'WorkHoursScreen: No valid doctorId found, redirecting to LoginScreen');
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+                content:
+                    Text('معرف الطبيب غير صالح، يرجى تسجيل الدخول مرة أخرى')),
+          );
+          Navigator.pushReplacementNamed(context, 'loginScreen');
+        });
+      } else {
+        _effectiveDoctorId = cachedDoctorId;
+      }
+    }
+    context.read<WorkHoursCubit>().fetchDays();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: const Color(0xFFF5F8FD), // لون خلفية خفيف
+        backgroundColor: const Color(0xFFF5F8FD),
         appBar: PreferredSize(
           preferredSize: Size.fromHeight(60.h),
           child: CustomAppBar(
             title: 'ساعات العمل',
-            // نريد إظهار زر العودة في هذه الشاشة:
             showBackInLeading: true,
             showBackButton: true,
             onBackPressed: () {
               Navigator.of(context).pop();
             },
-            // لا نحتاج أزرار أخرى في AppBar هنا، لكن إن أردت يمكن تفعيل showBell أو showGridInLeading بناءً على تصميمك:
             showBell: false,
             showUserIcon: false,
             showGridInLeading: false,
@@ -72,188 +74,249 @@ class _WorkHoursScreenState extends State<WorkHoursScreen> {
         body: SafeArea(
           child: Padding(
             padding: EdgeInsets.symmetric(horizontal: 16.w),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                SizedBox(height: 16.h),
-                // عنوان اختيار اليوم
-                Text(
-                  'اختر اليوم',
-                  style: TextStyle(
-                    fontSize: 16.sp,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
-                  ),
-                ),
-                SizedBox(height: 8.h),
-                // قائمة أيام الأسبوع أفقياً
-                SizedBox(
-                  height: 60.h,
-                  child: ListView.separated(
-                    scrollDirection: Axis.horizontal,
-                    itemCount: _days.length,
-                    padding: EdgeInsets.symmetric(horizontal: 4.w),
-                    separatorBuilder: (context, index) => SizedBox(width: 8.w),
-                    itemBuilder: (context, index) {
-                      final day = _days[index];
-                      final bool selected = index == _selectedDayIndex;
-                      return GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            _selectedDayIndex = index;
-                            // عند تغيير اليوم، يمكنك هنا تهيئة _timeSlots بحسب اليوم
-                            _selectedTime = null;
-                            // مثلاً: جلب قائمة ساعات جديدة من الـ backend
-                          });
-                        },
-                        child: Container(
-                          padding: EdgeInsets.symmetric(
-                              horizontal: 12.w, vertical: 8.h),
-                          decoration: BoxDecoration(
-                            color: selected
-                                ? const Color(0xFF00C4B4)
-                                : Colors.white,
-                            borderRadius: BorderRadius.circular(16.r),
-                            border: selected
-                                ? null
-                                : Border.all(color: Colors.grey.shade300),
-                            boxShadow: selected
-                                ? []
-                                : [
-                                    BoxShadow(
-                                      color: Colors.black12,
-                                      blurRadius: 4,
-                                      offset: const Offset(0, 2),
-                                    )
-                                  ],
-                          ),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              if (selected)
-                                Icon(
-                                  Icons.check_circle,
-                                  size: 16.sp,
-                                  color: Colors.white,
-                                ),
-                              if (!selected)
-                                SizedBox(height: 16.sp + 4.h),
-                              Text(
-                                day,
-                                style: TextStyle(
-                                  fontSize: 14.sp,
-                                  color: selected
-                                      ? Colors.white
-                                      : Colors.black87,
-                                  fontWeight: selected
-                                      ? FontWeight.bold
-                                      : FontWeight.normal,
-                                ),
-                              ),
-                            ],
-                          ),
+            child: BlocBuilder<WorkHoursCubit, WorkHoursState>(
+              builder: (context, state) {
+                if (state.status == WorkHoursStatus.loading) {
+                  return const Center(child: CircularProgressIndicator());
+                } else if (state.status == WorkHoursStatus.error) {
+                  return Center(child: Text(state.errorMessage ?? 'حدث خطأ'));
+                } else {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      SizedBox(height: 16.h),
+                      Text(
+                        'اختر اليوم',
+                        style: TextStyle(
+                          fontSize: 16.sp,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87,
                         ),
-                      );
-                    },
-                  ),
-                ),
-
-                SizedBox(height: 24.h),
-                // عنوان اختيار الوقت
-                Text(
-                  'اختر ساعة العمل',
-                  style: TextStyle(
-                    fontSize: 16.sp,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
-                  ),
-                ),
-                SizedBox(height: 8.h),
-
-                // قائمة بالأوقات في GridView ليمكن التمرير عمودياً
-                Expanded(
-                  child: GridView.builder(
-                    itemCount: _timeSlots.length,
-                    padding: EdgeInsets.only(bottom: 16.h, top: 4.h),
-                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 3,
-                      mainAxisSpacing: 12.h,
-                      crossAxisSpacing: 12.w,
-                      // childAspectRatio: العرض / الارتفاع. عدل هذه القيمة لتحكم بشكل المستطيلات.
-                      childAspectRatio: 2.5,
-                    ),
-                    itemBuilder: (context, index) {
-                      final time = _timeSlots[index];
-                      final bool isSelected = _selectedTime == time;
-                      return GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            _selectedTime = time;
-                          });
-                        },
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: isSelected
-                                ? const Color(0xFF00C4B4)
-                                : Colors.white,
-                            borderRadius: BorderRadius.circular(12.r),
-                            border: isSelected
-                                ? null
-                                : Border.all(color: Colors.grey.shade300),
-                            boxShadow: isSelected
-                                ? []
-                                : [
-                                    BoxShadow(
-                                      color: Colors.black12,
-                                      blurRadius: 4,
-                                      offset: const Offset(0, 2),
-                                    )
-                                  ],
-                          ),
-                          alignment: Alignment.center,
+                      ),
+                      SizedBox(height: 8.h),
+                      SizedBox(
+                        height: 90.h,
+                        child: ListView.separated(
+                          scrollDirection: Axis.horizontal,
+                          itemCount: state.days.length,
                           padding: EdgeInsets.symmetric(horizontal: 4.w),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                time,
-                                style: TextStyle(
-                                  fontSize: 14.sp,
-                                  color: isSelected
-                                      ? Colors.white
-                                      : Colors.black87,
-                                  fontWeight: isSelected
-                                      ? FontWeight.bold
-                                      : FontWeight.normal,
+                          separatorBuilder: (context, index) =>
+                              SizedBox(width: 8.w),
+                          itemBuilder: (context, index) {
+                            final day = state.days[index];
+                            final bool selected =
+                                day.number == _selectedDayNumber;
+                            return GestureDetector(
+                              onTap: () {
+                                setState(() {
+                                  _selectedDayNumber = day.number;
+                                  _selectedTimes.clear();
+                                  print(
+                                      'WorkHoursScreen: Fetching timetable for doctorId=$_effectiveDoctorId, dayNum=${day.number}');
+                                  context.read<WorkHoursCubit>().fetchTimeTable(
+                                      _effectiveDoctorId, day.number);
+                                });
+                              },
+                              child: Container(
+                                padding: EdgeInsets.symmetric(
+                                    horizontal: 12.w, vertical: 8.h),
+                                decoration: BoxDecoration(
+                                  color: selected
+                                      ? const Color(0xFF00C4B4)
+                                      : Colors.white,
+                                  borderRadius: BorderRadius.circular(16.r),
+                                  border: selected
+                                      ? null
+                                      : Border.all(color: Colors.grey.shade300),
+                                  boxShadow: selected
+                                      ? []
+                                      : [
+                                          BoxShadow(
+                                            color: Colors.black12,
+                                            blurRadius: 4,
+                                            offset: const Offset(0, 2),
+                                          )
+                                        ],
+                                ),
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    if (selected)
+                                      Icon(
+                                        Icons.check_circle,
+                                        size: 16.sp,
+                                        color: Colors.white,
+                                      ),
+                                    if (!selected)
+                                      SizedBox(height: 16.sp + 4.h),
+                                    Text(
+                                      day.name,
+                                      style: TextStyle(
+                                        fontSize: 14.sp,
+                                        color: selected
+                                            ? Colors.white
+                                            : Colors.black87,
+                                        fontWeight: selected
+                                            ? FontWeight.bold
+                                            : FontWeight.normal,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
-                              if (isSelected) ...[
-                                SizedBox(width: 4.w),
-                                Icon(
-                                  Icons.check_circle,
-                                  size: 16.sp,
-                                  color: Colors.white,
+                            );
+                          },
+                        ),
+                      ),
+                      SizedBox(height: 24.h),
+                      Text(
+                        'اختر ساعة العمل',
+                        style: TextStyle(
+                          fontSize: 16.sp,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87,
+                        ),
+                      ),
+                      SizedBox(height: 8.h),
+                      Expanded(
+                        child: state.timeTable != null
+                            ? GridView.builder(
+                                itemCount: state.timeTable!.daytimes.length,
+                                padding:
+                                    EdgeInsets.only(bottom: 16.h, top: 4.h),
+                                gridDelegate:
+                                    SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: 3,
+                                  mainAxisSpacing: 12.h,
+                                  crossAxisSpacing: 12.w,
+                                  childAspectRatio: 2.5,
                                 ),
-                              ],
-                            ],
+                                itemBuilder: (context, index) {
+                                  final timeSlot =
+                                      state.timeTable!.daytimes[index];
+                                  final bool isSelected =
+                                      _selectedTimes.contains(timeSlot.timeId);
+                                  final bool isActive = timeSlot.active;
+                                  return GestureDetector(
+                                    onTap: () {
+                                      setState(() {
+                                        if (isSelected) {
+                                          _selectedTimes
+                                              .remove(timeSlot.timeId);
+                                        } else {
+                                          _selectedTimes.add(timeSlot.timeId);
+                                        }
+                                        print(
+                                            'WorkHoursScreen: Toggled timeSlot ${timeSlot.timeName}, isSelected=$isSelected, isActive=$isActive');
+                                      });
+                                    },
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                        color: isSelected
+                                            ? const Color(
+                                                0xFF00C4B4) // Selected: Light green
+                                            : isActive
+                                                ? const Color(
+                                                    0xFFE0F7FA) // Active: Lighter green shade
+                                                : Colors.grey
+                                                    .shade300, // Inactive: Grey
+                                        borderRadius:
+                                            BorderRadius.circular(12.r),
+                                        border: isSelected
+                                            ? Border.all(
+                                                color: const Color(0xFF00C4B4),
+                                                width: 2)
+                                            : Border.all(
+                                                color: Colors.grey.shade400),
+                                        boxShadow: isSelected
+                                            ? [
+                                                BoxShadow(
+                                                  color: Colors.black26,
+                                                  blurRadius: 4,
+                                                  offset: const Offset(0, 2),
+                                                )
+                                              ]
+                                            : [],
+                                      ),
+                                      alignment: Alignment.center,
+                                      padding:
+                                          EdgeInsets.symmetric(horizontal: 4.w),
+                                      child: Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          Text(
+                                            timeSlot.timeName,
+                                            style: TextStyle(
+                                              fontSize: 14.sp,
+                                              color: isSelected
+                                                  ? Colors.white
+                                                  : isActive
+                                                      ? Colors.black87
+                                                      : Colors.grey.shade600,
+                                              fontWeight: isSelected
+                                                  ? FontWeight.bold
+                                                  : FontWeight.normal,
+                                            ),
+                                          ),
+                                          if (isSelected) ...[
+                                            SizedBox(width: 4.w),
+                                            Icon(
+                                              Icons.check_circle,
+                                              size: 16.sp,
+                                              color: Colors.white,
+                                            ),
+                                          ],
+                                        ],
+                                      ),
+                                    ),
+                                  );
+                                },
+                              )
+                            : const Center(
+                                child: Text('اختر يوماً لعرض الأوقات')),
+                      ),
+                      SizedBox(height: 16.h),
+                      Center(
+                        child: ElevatedButton(
+                          onPressed: _selectedTimes.isNotEmpty &&
+                                  _selectedDayNumber != null
+                              ? () {
+                                  // context.read<WorkHoursCubit>().updateTimeSlots(
+                                  //       _effectiveDoctorId,
+                                  //       _selectedDayNumber!,
+                                  //       _selectedTimes.toList(),
+                                  //     );
+                                  print(
+                                      'WorkHoursScreen: Confirm button pressed, selectedTimes=$_selectedTimes');
+                                }
+                              : null,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF00C4B4),
+                            padding: EdgeInsets.symmetric(
+                                horizontal: 24.w, vertical: 12.h),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12.r),
+                            ),
+                          ),
+                          child: Text(
+                            'تأكيد',
+                            style: TextStyle(
+                              fontSize: 16.sp,
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
-                      );
-                    },
-                  ),
-                ),
-              ],
+                      ),
+                    ],
+                  );
+                }
+              },
             ),
           ),
         ),
         bottomNavigationBar: const BottomNavBarWidget(),
-        // إذا كنت تريد زر إضافة في هذه الصفحة أيضاً:
-        // floatingActionButton: FloatingActionButton(
-        //   onPressed: () {},
-        //   backgroundColor: const Color(0xFF00C4B4),
-        //   child: const Icon(Icons.add),
-        // ),
-        // floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       ),
     );
   }

@@ -18,22 +18,22 @@ class SplashScreen extends StatefulWidget {
 
 class _SplashScreenState extends State<SplashScreen> {
   Future<void> _navigateNext() async {
-    // انتظر مدة قصيرة حتى يظهر الـ Splash
     await Future.delayed(const Duration(seconds: 3));
 
-    // تحقق من الاتصال بالإنترنت
     final connectivityResult = await Connectivity().checkConnectivity();
     final bool isOnline = connectivityResult != ConnectivityResult.none;
-
-    // تحقق من حالة تسجيل الدخول
     final bool isLoggedIn = CacheHelper.getLoginStatus();
 
     if (isOnline && isLoggedIn) {
-      // استرجع اسم المستخدم المسجل
-      final String username = CacheHelper.getString(key: 'username') ?? '';
+      final String username = CacheHelper.getString(key: 'username');
+      final int doctorId =
+          CacheHelper.getInteger(key: 'doctor_id').toInt(); // استرجاع كـ int
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
-          builder: (_) => HomeScreen(username: username),
+          builder: (_) => HomeScreen(
+            username: username,
+            doctorId: doctorId.toString(), // تحويل إلى String إذا لزم الأمر
+          ),
         ),
       );
     } else {
