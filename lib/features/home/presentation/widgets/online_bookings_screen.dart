@@ -1,28 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
-import 'package:flutter_svg/svg.dart';
-
-// استيراد CustomAppBar و BottomNavBarWidget حسب مسار مشروعك:
+import 'package:url_launcher/url_launcher.dart';
 import 'package:doctors_shifa_call/core/utils/widgets/custom_app_bar_widget.dart';
 import 'package:doctors_shifa_call/core/utils/widgets/custom_nav_bar_widget.dart';
-
-// نموذج بيانات للحجز (يمكنك تغييره ليتناسب مع بياناتك من الbackend)
-class Booking {
-  final String patientName;
-  final String visitType; // مثال: "استشارة" أو "علاج" أو غيره
-  final DateTime dateTime; // تاريخ ووقت الحجز
-  final bool isOnline; // true للأونلاين، false للعيادة
-  Booking({
-    required this.patientName,
-    required this.visitType,
-    required this.dateTime,
-    required this.isOnline,
-  });
-}
+import 'package:doctors_shifa_call/features/home/presentation/cubits/booking/online_bookings_cubit.dart';
+import 'package:doctors_shifa_call/features/home/presentation/cubits/booking/online_bookings_state.dart';
 
 class OnlineBookingsScreen extends StatefulWidget {
-  const OnlineBookingsScreen({super.key});
+  final String doctorId;
+
+  const OnlineBookingsScreen({super.key, required this.doctorId});
 
   @override
   State<OnlineBookingsScreen> createState() => _OnlineBookingsScreenState();
@@ -30,58 +19,20 @@ class OnlineBookingsScreen extends StatefulWidget {
 
 class _OnlineBookingsScreenState extends State<OnlineBookingsScreen> {
   DateTime _selectedDate = DateTime.now();
-  String get _selectedDateString =>
-      DateFormat('MM/dd/yyyy').format(_selectedDate);
 
-  // قائمة حجوزات وهمية للعرض. في تطبيق حقيقي جلب من الـ backend:
-  final List<Booking> _allBookings = [
-    Booking(
-        patientName: 'محمد علي',
-        visitType: 'استشارة',
-        dateTime: DateTime(2025, 6, 23, 16, 30), // تاريخ 23/6/2025
-        isOnline: true),
-    Booking(
-        patientName: 'سعيد محمود',
-        visitType: 'متابعة',
-        dateTime: DateTime(2025, 6, 23, 14, 00), // تاريخ 23/6/2025
-        isOnline: true),
-    Booking(
-        patientName: 'ليلى أحمد',
-        visitType: 'استشارة',
-        dateTime: DateTime(2025, 6, 23, 11, 00), // تاريخ 23/6/2025
-        isOnline: true),
-    Booking(
-        patientName: 'فاطمة عبدالله',
-        visitType: 'استشارة',
-        dateTime: DateTime(2025, 6, 23, 13, 00), // تاريخ 23/6/2025
-        isOnline: true),
-    Booking(
-        patientName: 'خالد سعيد',
-        visitType: 'متابعة',
-        dateTime: DateTime(2025, 6, 23, 15, 00), // تاريخ 23/6/2025
-        isOnline: true),
-    Booking(
-        patientName: 'نورا محمد',
-        visitType: 'تشخيص',
-        dateTime: DateTime(2025, 6, 23, 17, 00), // تاريخ 23/6/2025
-        isOnline: true),
-    Booking(
-        patientName: 'علي حسن',
-        visitType: 'تشخيص',
-        dateTime: DateTime(2025, 4, 14, 10, 30),
-        isOnline: false),
-    // ... أضف المزيد حسب الحاجة
-  ];
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _fetchBookings();
+    });
+  }
 
-  // ترجع قائمة الحجوزات في اليوم المحدد للأونلاين
-  List<Booking> get _bookingsForSelectedDate {
-    return _allBookings.where((b) {
-      return b.isOnline &&
-          b.dateTime.year == _selectedDate.year &&
-          b.dateTime.month == _selectedDate.month &&
-          b.dateTime.day == _selectedDate.day;
-    }).toList()
-      ..sort((a, b) => a.dateTime.compareTo(b.dateTime)); // ترتيب حسب الوقت
+  void _fetchBookings() {
+    final formattedDate = DateFormat('dd/M/yyyy').format(_selectedDate);
+    context
+        .read<OnlineBookingsCubit>()
+        .fetchBookings(widget.doctorId, formattedDate);
   }
 
   Future<void> _pickDate() async {
@@ -91,24 +42,20 @@ class _OnlineBookingsScreenState extends State<OnlineBookingsScreen> {
       initialDate: _selectedDate,
       firstDate: DateTime(now.year - 1),
       lastDate: DateTime(now.year + 1),
-      locale: const Locale('ar'), // إن أردت واجهة عربية
-      builder: (context, child) {
-        // لجعل calendar rtl إن لزم:
-        return child!;
-      },
+      locale: const Locale('ar'),
     );
     if (picked != null && picked != _selectedDate) {
       setState(() {
         _selectedDate = picked;
+        _fetchBookings();
       });
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    // ألوان التصميم
-    const Color backgroundMint = Color(0xFFD6F5EB); // خلفية خفيفة للأقسام
-    const Color mainGreen = Color(0xFF00C4B4); // لون التحديد
+    const Color backgroundMint = Color(0xFFD6F5EB);
+    const Color mainGreen = Color(0xFF00C4B4);
     const Color whiteColor = Colors.white;
 
     return Scaffold(
@@ -134,7 +81,6 @@ class _OnlineBookingsScreenState extends State<OnlineBookingsScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // اختيار التاريخ
               Text(
                 'اختر التاريخ',
                 style: TextStyle(
@@ -171,7 +117,7 @@ class _OnlineBookingsScreenState extends State<OnlineBookingsScreen> {
                           Expanded(
                             child: Center(
                               child: Text(
-                                _selectedDateString,
+                                DateFormat('MM/dd/yyyy').format(_selectedDate),
                                 style: TextStyle(
                                   fontSize: 20.sp,
                                   color: Colors.grey.shade600,
@@ -184,7 +130,6 @@ class _OnlineBookingsScreenState extends State<OnlineBookingsScreen> {
                             'assets/images/date_picker.png',
                             width: 55.w,
                             height: 55.w,
-                            // color: mainGreen, // لو الأيقونة أحادية اللون
                           ),
                         ],
                       ),
@@ -193,7 +138,6 @@ class _OnlineBookingsScreenState extends State<OnlineBookingsScreen> {
                 ],
               ),
               SizedBox(height: 16.h),
-              // عنوان الحجوزات لليوم
               Text(
                 'حجوزات اليوم:',
                 style: TextStyle(
@@ -203,7 +147,6 @@ class _OnlineBookingsScreenState extends State<OnlineBookingsScreen> {
                 ),
               ),
               SizedBox(height: 8.h),
-              // خلفية خضراء منحنية تحتوي على القائمة
               Expanded(
                 child: Container(
                   padding:
@@ -212,8 +155,22 @@ class _OnlineBookingsScreenState extends State<OnlineBookingsScreen> {
                     color: Color(0xffA5E1CB),
                     borderRadius: BorderRadius.circular(24.r),
                   ),
-                  child: _bookingsForSelectedDate.isEmpty
-                      ? Center(
+                  child: BlocConsumer<OnlineBookingsCubit, OnlineBookingsState>(
+                    listener: (context, state) {
+                      if (state.status == BookingsStatus.error) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                              content: Text(
+                                  state.errorMessage ?? 'فشل في جلب الحجوزات')),
+                        );
+                      }
+                    },
+                    builder: (context, state) {
+                      if (state.status == BookingsStatus.loading) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
+                      if (state.bookings.isEmpty) {
+                        return Center(
                           child: Text(
                             'لا توجد حجوزات لهذا اليوم',
                             style: TextStyle(
@@ -221,30 +178,31 @@ class _OnlineBookingsScreenState extends State<OnlineBookingsScreen> {
                               color: Colors.grey.shade600,
                             ),
                           ),
-                        )
-                      : ListView.builder(
-                          itemCount: _bookingsForSelectedDate.length,
-                          padding: EdgeInsets.only(bottom: 16.h),
-                          itemBuilder: (context, index) {
-                            final booking = _bookingsForSelectedDate[index];
-                            // صيغة التاريخ والوقت للعرض:
-                            final String dateStr =
-                                DateFormat('d/M/yyyy').format(booking.dateTime);
-                            final String timeStr = DateFormat('hh:mm a', 'ar')
-                                .format(booking.dateTime);
-                            // DateFormat hh:mm a يعطي مثل 04:30 م
-
-                            return Padding(
-                              padding: EdgeInsets.symmetric(vertical: 6.h),
-                              child: _BookingItem(
-                                patientName: booking.patientName,
-                                visitType: booking.visitType,
-                                dateStr: dateStr,
-                                timeStr: timeStr,
-                              ),
-                            );
-                          },
-                        ),
+                        );
+                      }
+                      return ListView.builder(
+                        itemCount: state.bookings.length,
+                        padding: EdgeInsets.only(bottom: 16.h),
+                        itemBuilder: (context, index) {
+                          final booking = state.bookings[index];
+                          final dateStr = DateFormat('d/M/yyyy')
+                              .format(DateTime.parse(booking.date));
+                          final timeStr = DateFormat('hh:mm a', 'ar').format(
+                              DateTime.parse('2025-01-01 ${booking.time}'));
+                          return Padding(
+                            padding: EdgeInsets.symmetric(vertical: 6.h),
+                            child: _BookingItem(
+                              patientName: booking.patientName,
+                              visitType: booking.visitType,
+                              dateStr: dateStr,
+                              timeStr: timeStr,
+                              onlineMeetingUrl: booking.onlineMeetingUrl,
+                            ),
+                          );
+                        },
+                      );
+                    },
+                  ),
                 ),
               ),
             ],
@@ -256,20 +214,72 @@ class _OnlineBookingsScreenState extends State<OnlineBookingsScreen> {
   }
 }
 
-// ويدجت لعنصر الحجز المفرد
 class _BookingItem extends StatelessWidget {
   final String patientName;
   final String visitType;
-  final String dateStr; // مثال: "14/4/2025"
-  final String timeStr; // مثال: "04:30 م"
+  final String dateStr;
+  final String timeStr;
+  final String onlineMeetingUrl;
 
   const _BookingItem({
-    super.key,
     required this.patientName,
     required this.visitType,
     required this.dateStr,
     required this.timeStr,
+    required this.onlineMeetingUrl,
   });
+
+  Future<void> _launchMeetingUrl(BuildContext context) async {
+    print('Attempting to launch Zoom URL: $onlineMeetingUrl');
+
+    // التحقق من أن الرابط صالح
+    if (onlineMeetingUrl.isEmpty || !onlineMeetingUrl.startsWith('https://')) {
+      print('Invalid Zoom URL: $onlineMeetingUrl');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('رابط Zoom غير صالح')),
+      );
+      return;
+    }
+
+    final Uri url = Uri.parse(onlineMeetingUrl);
+
+    // محاولة فتح الرابط في تطبيق Zoom
+    try {
+      if (await canLaunchUrl(url)) {
+        bool launched = await launchUrl(
+          url,
+          mode: LaunchMode.externalApplication,
+        );
+        print('Launch in external application: $launched');
+
+        // إذا فشل فتح التطبيق، جرب platformDefault (قد يفتح المتصفح)
+        if (!launched) {
+          launched = await launchUrl(
+            url,
+            mode: LaunchMode.platformDefault,
+          );
+          print('Launch in platform default: $launched');
+        }
+
+        if (!launched) {
+          print('Failed to launch URL in both modes: $onlineMeetingUrl');
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('فشل فتح رابط Zoom')),
+          );
+        }
+      } else {
+        print('Cannot launch URL: $onlineMeetingUrl');
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('لا يمكن فتح رابط الاجتماع')),
+        );
+      }
+    } catch (e) {
+      print('Error launching URL: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('خطأ أثناء فتح رابط Zoom: $e')),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -293,16 +303,14 @@ class _BookingItem extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // الصف العلوي: اسم المريض ونوع الزيارة
             Row(
               children: [
-                // اسم المريض
                 Expanded(
                   child: Container(
                     padding:
                         EdgeInsets.symmetric(vertical: 6.h, horizontal: 8.w),
                     decoration: BoxDecoration(
-                      color: Color(0xffA5E1CB), // خلفية فاتحة قريب للون الأخضر
+                      color: Color(0xffA5E1CB),
                       borderRadius: BorderRadius.circular(16.r),
                       boxShadow: [
                         BoxShadow(
@@ -323,7 +331,6 @@ class _BookingItem extends StatelessWidget {
                   ),
                 ),
                 SizedBox(width: 8.w),
-                // نوع الزيارة
                 Expanded(
                   child: Container(
                     padding:
@@ -352,11 +359,9 @@ class _BookingItem extends StatelessWidget {
               ],
             ),
             SizedBox(height: 12.h),
-            // الصف السفلي: أيقونة الفيديو + تاريخ ووقت
             Row(
               children: [
                 SizedBox(width: 12.w),
-                // حقل التاريخ
                 Expanded(
                   child: Container(
                     padding:
@@ -383,7 +388,6 @@ class _BookingItem extends StatelessWidget {
                   ),
                 ),
                 SizedBox(width: 8.w),
-                // حقل الوقت
                 Expanded(
                   child: Container(
                     padding:
@@ -415,32 +419,33 @@ class _BookingItem extends StatelessWidget {
                           size: 16.sp,
                           color: Colors.white,
                         ),
-                        SizedBox(width: 4.w),
                       ],
                     ),
                   ),
                 ),
                 SizedBox(width: 12.w),
-                // أيقونة الفيديو (أونلاين)
-                Container(
-                  width: 60.w,
-                  height: 60.h,
-                  decoration: BoxDecoration(
-                    color: Color(0xffA5E1CB),
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black12,
-                        blurRadius: 4,
-                        offset: const Offset(0, 2),
+                GestureDetector(
+                  onTap: () => _launchMeetingUrl(context),
+                  child: Container(
+                    width: 60.w,
+                    height: 60.h,
+                    decoration: BoxDecoration(
+                      // color: Color(0xffA5E1CB),
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.white,
+                          blurRadius: 4,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Center(
+                      child: Image.asset(
+                        'assets/images/svgs/vid.png',
+                        width: 70.w,
+                        height: 70.h,
                       ),
-                    ],
-                  ),
-                  child: const Center(
-                    child: Icon(
-                      Icons.videocam,
-                      color: Color(0xFF00C4B4),
-                      size: 28,
                     ),
                   ),
                 ),

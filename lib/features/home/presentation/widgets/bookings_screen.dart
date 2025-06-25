@@ -1,18 +1,15 @@
-// bookings_screen.dart
 import 'package:doctors_shifa_call/features/home/presentation/widgets/clinic_booking_screen.dart';
 import 'package:doctors_shifa_call/features/home/presentation/widgets/online_bookings_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
-
-// عدّل مسار الاستيراد حسب هيكل مشروعك:
 import 'package:doctors_shifa_call/core/utils/widgets/custom_app_bar_widget.dart';
 import 'package:doctors_shifa_call/core/utils/widgets/custom_nav_bar_widget.dart';
 
-// استيراد صفحة الحجوزات أونلاين التي سننشئها لاحقًا:
-
 class BookingsScreen extends StatelessWidget {
-  const BookingsScreen({super.key});
+  final String doctorId; // إضافة doctorId كمعامل مطلوب
+
+  const BookingsScreen({super.key, required this.doctorId});
 
   @override
   Widget build(BuildContext context) {
@@ -29,7 +26,6 @@ class BookingsScreen extends StatelessWidget {
             onBackPressed: () {
               Navigator.of(context).pop();
             },
-            // يمكنك تفعيل أيقونات أخرى حسب الحاجة
             showBell: false,
             showUserIcon: false,
             showGridInLeading: false,
@@ -53,12 +49,12 @@ class BookingsScreen extends StatelessWidget {
                   title: 'العيادة',
                   subtitle: 'عرض الحجوزات في العيادة',
                   onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const ClinicBookingScreen(),
-                      ),
-                    );
+                    // Navigator.push(
+                    //   context,
+                    //   MaterialPageRoute(
+                    //     builder: (_) => const ClinicBookingScreen(),
+                    //   ),
+                    // );
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
                           content: Text('صفحة حجوزات العيادة لم تجهّز بعد')),
@@ -77,12 +73,11 @@ class BookingsScreen extends StatelessWidget {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (_) => const OnlineBookingsScreen(),
+                        builder: (_) => OnlineBookingsScreen(doctorId: doctorId),
                       ),
                     );
                   },
                 ),
-                // إذا أردت عرض بطاقات إضافية، أضف هنا...
               ],
             ),
           ),

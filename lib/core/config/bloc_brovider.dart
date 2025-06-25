@@ -7,6 +7,7 @@ import 'package:doctors_shifa_call/features/home/presentation/cubits/work_hour/w
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+
 Widget buildAppWithProviders({required Widget child}) {
   return MultiBlocProvider(
     providers: [
@@ -18,6 +19,9 @@ Widget buildAppWithProviders({required Widget child}) {
       ),
       BlocProvider(
         create: (_) => WorkHoursCubit(WorkHoursRepo(ApiService(DioFactory.getDio()))),
+      ),
+      BlocProvider(
+        create: (_) => ServicesLocator.onlineBookingsCubit,
       ),
     ],
     child: child,

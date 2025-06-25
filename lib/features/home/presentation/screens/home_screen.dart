@@ -10,7 +10,7 @@ import 'package:flutter_svg/svg.dart';
 
 class HomeScreen extends StatelessWidget {
   final String username;
-  final String doctorId; // تم إضافة doctorId كمعامل
+  final String doctorId;
 
   const HomeScreen({
     super.key,
@@ -98,7 +98,7 @@ class HomeScreen extends StatelessWidget {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (_) => const BookingsScreen(),
+                              builder: (_) => BookingsScreen(doctorId: doctorId),
                             ),
                           );
                         },
@@ -111,9 +111,7 @@ class HomeScreen extends StatelessWidget {
                         ),
                         title: 'المرضى',
                         subtitle: 'معرفة معلومات عن المرضى و مواعيد حجزهم',
-                        onTap: () {
-                          // تنقل إلى صفحة المرضى (يمكن إضافته لاحقًا)
-                        },
+                        onTap: () {},
                       ),
                       _HomeCard(
                         iconWidget: Image.asset(
@@ -123,9 +121,7 @@ class HomeScreen extends StatelessWidget {
                         ),
                         title: 'الإعدادات',
                         subtitle: 'حجز مواعيدك في العيادة',
-                        onTap: () {
-                          // تنقل إلى صفحة الإعدادات (يمكن إضافته لاحقًا)
-                        },
+                        onTap: () {},
                       ),
                     ],
                   ),

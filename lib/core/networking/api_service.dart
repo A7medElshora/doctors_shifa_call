@@ -1,6 +1,8 @@
 import 'package:dio/dio.dart';
+import 'package:doctors_shifa_call/features/home/data/models/booking/booking.dart';
 import 'package:doctors_shifa_call/features/home/data/models/work_hour/day.dart';
 import 'package:doctors_shifa_call/features/home/data/models/work_hour/doctors_time_table.dart';
+import 'package:doctors_shifa_call/features/home/presentation/widgets/clinic_booking_screen.dart';
 import 'package:retrofit/retrofit.dart';
 import 'package:doctors_shifa_call/core/networking/api_constants.dart';
 import 'package:doctors_shifa_call/features/auth/data/models/login_response.dart';
@@ -28,5 +30,10 @@ abstract class ApiService {
   @POST(ApiConstants.updateDoctorTimeTableEndpoint)
   Future<void> updateDoctorTimeTable(
     @Body() DoctorTimeTable timeTable,
+  );
+    @GET(ApiConstants.getDoctorReservationsEndpoint)
+  Future<List<Booking>> getDoctorReservations(
+    @Query("doctor_id") String doctorId,
+    @Query("date") String date,
   );
 }
