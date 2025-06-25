@@ -67,7 +67,7 @@ class BookingsScreen extends StatelessWidget {
                 ),
                 _BookingCategoryCard(
                   iconWidget: SvgPicture.asset(
-                    'assets/images/svgs/online.svg',
+                    'assets/images/svgs/on_call.svg',
                     width: 60.w,
                     height: 60.w,
                   ),

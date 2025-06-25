@@ -25,4 +25,8 @@ abstract class ApiService {
     @Query("doctor_id") String doctorId,
     @Query("day_num") String dayNum,
   );
+  @POST(ApiConstants.updateDoctorTimeTableEndpoint)
+  Future<void> updateDoctorTimeTable(
+    @Body() DoctorTimeTable timeTable,
+  );
 }

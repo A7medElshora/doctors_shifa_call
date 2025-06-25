@@ -26,4 +26,13 @@ class WorkHoursRepo {
       return ApiResult.failure(ServerFailure(e.toString()));
     }
   }
+
+  Future<ApiResult<void>> updateDoctorTimeTable(DoctorTimeTable timeTable) async {
+    try {
+      await _apiService.updateDoctorTimeTable(timeTable);
+      return const ApiResult.success(null);
+    } catch (e) {
+      return ApiResult.failure(ServerFailure(e.toString()));
+    }
+  }
 }

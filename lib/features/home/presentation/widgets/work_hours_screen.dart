@@ -29,18 +29,13 @@ class _WorkHoursScreenState extends State<WorkHoursScreen> {
     _effectiveDoctorId = widget.doctorId;
     print('WorkHoursScreen: Initial doctorId=${widget.doctorId}');
     if (_effectiveDoctorId == '0' || _effectiveDoctorId.isEmpty) {
-      final cachedDoctorId =
-          CacheHelper.getInteger(key: 'doctor_id').toString();
-      print(
-          'WorkHoursScreen: Invalid doctorId, using cachedDoctorId=$cachedDoctorId');
+      final cachedDoctorId = CacheHelper.getInteger(key: 'doctor_id').toString();
+      print('WorkHoursScreen: Invalid doctorId, using cachedDoctorId=$cachedDoctorId');
       if (cachedDoctorId == '0' || cachedDoctorId.isEmpty) {
-        print(
-            'WorkHoursScreen: No valid doctorId found, redirecting to LoginScreen');
+        print('WorkHoursScreen: No valid doctorId found, redirecting to LoginScreen');
         WidgetsBinding.instance.addPostFrameCallback((_) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-                content:
-                    Text('معرف الطبيب غير صالح، يرجى تسجيل الدخول مرة أخرى')),
+            const SnackBar(content: Text('معرف الطبيب غير صالح، يرجى تسجيل الدخول مرة أخرى')),
           );
           Navigator.pushReplacementNamed(context, 'loginScreen');
         });
@@ -75,7 +70,18 @@ class _WorkHoursScreenState extends State<WorkHoursScreen> {
         body: SafeArea(
           child: Padding(
             padding: EdgeInsets.symmetric(horizontal: 16.w),
-            child: BlocBuilder<WorkHoursCubit, WorkHoursState>(
+            child: BlocConsumer<WorkHoursCubit, WorkHoursState>(
+              listener: (context, state) {
+                if (state.updateStatus == UpdateStatus.success) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('تم تحديث ساعات العمل بنجاح')),
+                  );
+                } else if (state.updateStatus == UpdateStatus.error) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text(state.updateErrorMessage ?? 'فشل في تحديث ساعات العمل')),
+                  );
+                }
+              },
               builder: (context, state) {
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -96,23 +102,18 @@ class _WorkHoursScreenState extends State<WorkHoursScreen> {
                         enabled: state.status == WorkHoursStatus.loading,
                         child: ListView.separated(
                           scrollDirection: Axis.horizontal,
-                          itemCount: state.status == WorkHoursStatus.loading
-                              ? 7
-                              : state.days.length,
+                          itemCount: state.status == WorkHoursStatus.loading ? 7 : state.days.length,
                           padding: EdgeInsets.symmetric(horizontal: 4.w),
-                          separatorBuilder: (context, index) =>
-                              SizedBox(width: 8.w),
+                          separatorBuilder: (context, index) => SizedBox(width: 8.w),
                           itemBuilder: (context, index) {
                             if (state.status == WorkHoursStatus.loading) {
                               return Container(
                                 width: 80.w,
-                                padding: EdgeInsets.symmetric(
-                                    horizontal: 12.w, vertical: 8.h),
+                                padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
                                 decoration: BoxDecoration(
                                   color: Colors.white,
                                   borderRadius: BorderRadius.circular(16.r),
-                                  border:
-                                      Border.all(color: Colors.grey.shade300),
+                                  border: Border.all(color: Colors.grey.shade300),
                                   boxShadow: const [
                                     BoxShadow(
                                       color: Colors.black12,
@@ -135,30 +136,22 @@ class _WorkHoursScreenState extends State<WorkHoursScreen> {
                               );
                             }
                             final day = state.days[index];
-                            final bool selected =
-                                day.number == _selectedDayNumber;
+                            final bool selected = day.number == _selectedDayNumber;
                             return GestureDetector(
                               onTap: () {
                                 setState(() {
                                   _selectedDayNumber = day.number;
                                   _selectedTimes.clear();
-                                  print(
-                                      'WorkHoursScreen: Fetching timetable for doctorId=$_effectiveDoctorId, dayNum=${day.number}');
-                                  context.read<WorkHoursCubit>().fetchTimeTable(
-                                      _effectiveDoctorId, day.number);
+                                  print('WorkHoursScreen: Fetching timetable for doctorId=$_effectiveDoctorId, dayNum=${day.number}');
+                                  context.read<WorkHoursCubit>().fetchTimeTable(_effectiveDoctorId, day.number);
                                 });
                               },
                               child: Container(
-                                padding: EdgeInsets.symmetric(
-                                    horizontal: 12.w, vertical: 8.h),
+                                padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
                                 decoration: BoxDecoration(
-                                  color: selected
-                                      ? const Color(0xFF00C4B4)
-                                      : Colors.white,
+                                  color: selected ? const Color(0xFF00C4B4) : Colors.white,
                                   borderRadius: BorderRadius.circular(16.r),
-                                  border: selected
-                                      ? null
-                                      : Border.all(color: Colors.grey.shade300),
+                                  border: selected ? null : Border.all(color: Colors.grey.shade300),
                                   boxShadow: selected
                                       ? []
                                       : [
@@ -184,12 +177,8 @@ class _WorkHoursScreenState extends State<WorkHoursScreen> {
                                       day.name,
                                       style: TextStyle(
                                         fontSize: 14.sp,
-                                        color: selected
-                                            ? Colors.white
-                                            : Colors.black87,
-                                        fontWeight: selected
-                                            ? FontWeight.bold
-                                            : FontWeight.normal,
+                                        color: selected ? Colors.white : Colors.black87,
+                                        fontWeight: selected ? FontWeight.bold : FontWeight.normal,
                                       ),
                                     ),
                                   ],
@@ -214,45 +203,32 @@ class _WorkHoursScreenState extends State<WorkHoursScreen> {
                       child: state.status == WorkHoursStatus.error
                           ? Center(child: Text(state.errorMessage ?? 'حدث خطأ'))
                           : _selectedDayNumber == null
-                              ? const Center(
-                                  child: Text('اختر يوماً لعرض الأوقات'))
+                              ? const Center(child: Text('اختر يوماً لعرض الأوقات'))
                               : Skeletonizer(
-                                  enabled:
-                                      state.status == WorkHoursStatus.loading &&
-                                          state.timeTable == null,
+                                  enabled: state.status == WorkHoursStatus.loading && state.timeTable == null,
                                   child: state.timeTable != null
                                       ? GridView.builder(
-                                          itemCount:
-                                              state.timeTable!.daytimes.length,
-                                          padding: EdgeInsets.only(
-                                              bottom: 16.h, top: 4.h),
-                                          gridDelegate:
-                                              SliverGridDelegateWithFixedCrossAxisCount(
+                                          itemCount: state.timeTable!.daytimes.length,
+                                          padding: EdgeInsets.only(bottom: 16.h, top: 4.h),
+                                          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                                             crossAxisCount: 3,
                                             mainAxisSpacing: 12.h,
                                             crossAxisSpacing: 12.w,
                                             childAspectRatio: 2.5,
                                           ),
                                           itemBuilder: (context, index) {
-                                            final timeSlot = state
-                                                .timeTable!.daytimes[index];
-                                            final bool isSelected =
-                                                _selectedTimes
-                                                    .contains(timeSlot.timeId);
-                                            final bool isActive =
-                                                timeSlot.active;
+                                            final timeSlot = state.timeTable!.daytimes[index];
+                                            final bool isSelected = _selectedTimes.contains(timeSlot.timeId);
+                                            final bool isActive = timeSlot.active;
                                             return GestureDetector(
                                               onTap: () {
                                                 setState(() {
                                                   if (isSelected) {
-                                                    _selectedTimes.remove(
-                                                        timeSlot.timeId);
+                                                    _selectedTimes.remove(timeSlot.timeId);
                                                   } else {
-                                                    _selectedTimes
-                                                        .add(timeSlot.timeId);
+                                                    _selectedTimes.add(timeSlot.timeId);
                                                   }
-                                                  print(
-                                                      'WorkHoursScreen: Toggled timeSlot ${timeSlot.timeName}, isSelected=$isSelected, isActive=$isActive');
+                                                  print('WorkHoursScreen: Toggled timeSlot ${timeSlot.timeName}, isSelected=$isSelected, isActive=$isActive');
                                                 });
                                               },
                                               child: Container(
@@ -260,40 +236,26 @@ class _WorkHoursScreenState extends State<WorkHoursScreen> {
                                                   color: isSelected
                                                       ? const Color(0xFF00C4B4)
                                                       : isActive
-                                                          ? const Color(
-                                                              0xFFE0F7FA)
-                                                          : Colors
-                                                              .grey.shade300,
-                                                  borderRadius:
-                                                      BorderRadius.circular(
-                                                          12.r),
+                                                          ? const Color(0xFFE0F7FA)
+                                                          : Colors.grey.shade300,
+                                                  borderRadius: BorderRadius.circular(12.r),
                                                   border: isSelected
-                                                      ? Border.all(
-                                                          color: const Color(
-                                                              0xFF00C4B4),
-                                                          width: 2)
-                                                      : Border.all(
-                                                          color: Colors
-                                                              .grey.shade400),
+                                                      ? Border.all(color: const Color(0xFF00C4B4), width: 2)
+                                                      : Border.all(color: Colors.grey.shade400),
                                                   boxShadow: isSelected
                                                       ? [
                                                           BoxShadow(
-                                                            color:
-                                                                Colors.black26,
+                                                            color: Colors.black26,
                                                             blurRadius: 4,
-                                                            offset:
-                                                                const Offset(
-                                                                    0, 2),
+                                                            offset: const Offset(0, 2),
                                                           ),
                                                         ]
                                                       : [],
                                                 ),
                                                 alignment: Alignment.center,
-                                                padding: EdgeInsets.symmetric(
-                                                    horizontal: 4.w),
+                                                padding: EdgeInsets.symmetric(horizontal: 4.w),
                                                 child: Row(
-                                                  mainAxisAlignment:
-                                                      MainAxisAlignment.center,
+                                                  mainAxisAlignment: MainAxisAlignment.center,
                                                   children: [
                                                     Text(
                                                       timeSlot.timeName,
@@ -303,11 +265,8 @@ class _WorkHoursScreenState extends State<WorkHoursScreen> {
                                                             ? Colors.white
                                                             : isActive
                                                                 ? Colors.black87
-                                                                : Colors.grey
-                                                                    .shade600,
-                                                        fontWeight: isSelected
-                                                            ? FontWeight.bold
-                                                            : FontWeight.normal,
+                                                                : Colors.grey.shade600,
+                                                        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                                                       ),
                                                     ),
                                                     if (isSelected) ...[
@@ -325,12 +284,9 @@ class _WorkHoursScreenState extends State<WorkHoursScreen> {
                                           },
                                         )
                                       : GridView.builder(
-                                          itemCount:
-                                              9, // Placeholder count for skeleton
-                                          padding: EdgeInsets.only(
-                                              bottom: 16.h, top: 4.h),
-                                          gridDelegate:
-                                              SliverGridDelegateWithFixedCrossAxisCount(
+                                          itemCount: 9, // Placeholder count for skeleton
+                                          padding: EdgeInsets.only(bottom: 16.h, top: 4.h),
+                                          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                                             crossAxisCount: 3,
                                             mainAxisSpacing: 12.h,
                                             crossAxisSpacing: 12.w,
@@ -340,15 +296,11 @@ class _WorkHoursScreenState extends State<WorkHoursScreen> {
                                             return Container(
                                               decoration: BoxDecoration(
                                                 color: Colors.grey.shade300,
-                                                borderRadius:
-                                                    BorderRadius.circular(12.r),
-                                                border: Border.all(
-                                                    color:
-                                                        Colors.grey.shade400),
+                                                borderRadius: BorderRadius.circular(12.r),
+                                                border: Border.all(color: Colors.grey.shade400),
                                               ),
                                               alignment: Alignment.center,
-                                              padding: EdgeInsets.symmetric(
-                                                  horizontal: 4.w),
+                                              padding: EdgeInsets.symmetric(horizontal: 4.w),
                                               child: Container(
                                                 width: 60.w,
                                                 height: 14.h,
@@ -361,36 +313,35 @@ class _WorkHoursScreenState extends State<WorkHoursScreen> {
                     ),
                     SizedBox(height: 16.h),
                     Center(
-                      child: ElevatedButton(
-                        onPressed: _selectedTimes.isNotEmpty &&
-                                _selectedDayNumber != null
-                            ? () {
-                                // context.read<WorkHoursCubit>().updateTimeSlots(
-                                //       _effectiveDoctorId,
-                                //       _selectedDayNumber!,
-                                //       _selectedTimes.toList(),
-                                //     );
-                                print(
-                                    'WorkHoursScreen: Confirm button pressed, selectedTimes=$_selectedTimes');
-                              }
-                            : null,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF00C4B4),
-                          padding: EdgeInsets.symmetric(
-                              horizontal: 24.w, vertical: 12.h),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12.r),
-                          ),
-                        ),
-                        child: Text(
-                          'تأكيد',
-                          style: TextStyle(
-                            fontSize: 16.sp,
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
+                      child: state.updateStatus == UpdateStatus.loading
+                          ? const CircularProgressIndicator()
+                          : ElevatedButton(
+                              onPressed: _selectedTimes.isNotEmpty && _selectedDayNumber != null
+                                  ? () {
+                                      context.read<WorkHoursCubit>().updateTimeSlots(
+                                            _effectiveDoctorId,
+                                            _selectedDayNumber!,
+                                            _selectedTimes.toList(),
+                                          );
+                                      print('WorkHoursScreen: Confirm button pressed, selectedTimes=$_selectedTimes');
+                                    }
+                                  : null,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF00C4B4),
+                                padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 12.h),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12.r),
+                                ),
+                              ),
+                              child: Text(
+                                'تأكيد',
+                                style: TextStyle(
+                                  fontSize: 16.sp,
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
                     ),
                     SizedBox(height: 16.h),
                   ],
