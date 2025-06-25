@@ -6,6 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:doctors_shifa_call/core/utils/widgets/custom_app_bar_widget.dart';
 import 'package:doctors_shifa_call/core/utils/widgets/custom_nav_bar_widget.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 
 class WorkHoursScreen extends StatefulWidget {
   final String doctorId;
@@ -76,33 +77,63 @@ class _WorkHoursScreenState extends State<WorkHoursScreen> {
             padding: EdgeInsets.symmetric(horizontal: 16.w),
             child: BlocBuilder<WorkHoursCubit, WorkHoursState>(
               builder: (context, state) {
-                if (state.status == WorkHoursStatus.loading) {
-                  return const Center(child: CircularProgressIndicator());
-                } else if (state.status == WorkHoursStatus.error) {
-                  return Center(child: Text(state.errorMessage ?? 'حدث خطأ'));
-                } else {
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      SizedBox(height: 16.h),
-                      Text(
-                        'اختر اليوم',
-                        style: TextStyle(
-                          fontSize: 16.sp,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black87,
-                        ),
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SizedBox(height: 16.h),
+                    Text(
+                      'اختر اليوم',
+                      style: TextStyle(
+                        fontSize: 16.sp,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
                       ),
-                      SizedBox(height: 8.h),
-                      SizedBox(
-                        height: 90.h,
+                    ),
+                    SizedBox(height: 8.h),
+                    SizedBox(
+                      height: 90.h,
+                      child: Skeletonizer(
+                        enabled: state.status == WorkHoursStatus.loading,
                         child: ListView.separated(
                           scrollDirection: Axis.horizontal,
-                          itemCount: state.days.length,
+                          itemCount: state.status == WorkHoursStatus.loading
+                              ? 7
+                              : state.days.length,
                           padding: EdgeInsets.symmetric(horizontal: 4.w),
                           separatorBuilder: (context, index) =>
                               SizedBox(width: 8.w),
                           itemBuilder: (context, index) {
+                            if (state.status == WorkHoursStatus.loading) {
+                              return Container(
+                                width: 80.w,
+                                padding: EdgeInsets.symmetric(
+                                    horizontal: 12.w, vertical: 8.h),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(16.r),
+                                  border:
+                                      Border.all(color: Colors.grey.shade300),
+                                  boxShadow: const [
+                                    BoxShadow(
+                                      color: Colors.black12,
+                                      blurRadius: 4,
+                                      offset: Offset(0, 2),
+                                    ),
+                                  ],
+                                ),
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    SizedBox(height: 16.sp + 4.h),
+                                    Container(
+                                      width: 40.w,
+                                      height: 14.h,
+                                      color: Colors.grey.shade300,
+                                    ),
+                                  ],
+                                ),
+                              );
+                            }
                             final day = state.days[index];
                             final bool selected =
                                 day.number == _selectedDayNumber;
@@ -135,7 +166,7 @@ class _WorkHoursScreenState extends State<WorkHoursScreen> {
                                             color: Colors.black12,
                                             blurRadius: 4,
                                             offset: const Offset(0, 2),
-                                          )
+                                          ),
                                         ],
                                 ),
                                 child: Column(
@@ -168,155 +199,207 @@ class _WorkHoursScreenState extends State<WorkHoursScreen> {
                           },
                         ),
                       ),
-                      SizedBox(height: 24.h),
-                      Text(
-                        'اختر ساعة العمل',
-                        style: TextStyle(
-                          fontSize: 16.sp,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black87,
-                        ),
+                    ),
+                    SizedBox(height: 24.h),
+                    Text(
+                      'اختر ساعة العمل',
+                      style: TextStyle(
+                        fontSize: 16.sp,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
                       ),
-                      SizedBox(height: 8.h),
-                      Expanded(
-                        child: state.timeTable != null
-                            ? GridView.builder(
-                                itemCount: state.timeTable!.daytimes.length,
-                                padding:
-                                    EdgeInsets.only(bottom: 16.h, top: 4.h),
-                                gridDelegate:
-                                    SliverGridDelegateWithFixedCrossAxisCount(
-                                  crossAxisCount: 3,
-                                  mainAxisSpacing: 12.h,
-                                  crossAxisSpacing: 12.w,
-                                  childAspectRatio: 2.5,
-                                ),
-                                itemBuilder: (context, index) {
-                                  final timeSlot =
-                                      state.timeTable!.daytimes[index];
-                                  final bool isSelected =
-                                      _selectedTimes.contains(timeSlot.timeId);
-                                  final bool isActive = timeSlot.active;
-                                  return GestureDetector(
-                                    onTap: () {
-                                      setState(() {
-                                        if (isSelected) {
-                                          _selectedTimes
-                                              .remove(timeSlot.timeId);
-                                        } else {
-                                          _selectedTimes.add(timeSlot.timeId);
-                                        }
-                                        print(
-                                            'WorkHoursScreen: Toggled timeSlot ${timeSlot.timeName}, isSelected=$isSelected, isActive=$isActive');
-                                      });
-                                    },
-                                    child: Container(
-                                      decoration: BoxDecoration(
-                                        color: isSelected
-                                            ? const Color(
-                                                0xFF00C4B4) // Selected: Light green
-                                            : isActive
-                                                ? const Color(
-                                                    0xFFE0F7FA) // Active: Lighter green shade
-                                                : Colors.grey
-                                                    .shade300, // Inactive: Grey
-                                        borderRadius:
-                                            BorderRadius.circular(12.r),
-                                        border: isSelected
-                                            ? Border.all(
-                                                color: const Color(0xFF00C4B4),
-                                                width: 2)
-                                            : Border.all(
-                                                color: Colors.grey.shade400),
-                                        boxShadow: isSelected
-                                            ? [
-                                                BoxShadow(
-                                                  color: Colors.black26,
-                                                  blurRadius: 4,
-                                                  offset: const Offset(0, 2),
-                                                )
-                                              ]
-                                            : [],
-                                      ),
-                                      alignment: Alignment.center,
-                                      padding:
-                                          EdgeInsets.symmetric(horizontal: 4.w),
-                                      child: Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
-                                        children: [
-                                          Text(
-                                            timeSlot.timeName,
-                                            style: TextStyle(
-                                              fontSize: 14.sp,
-                                              color: isSelected
-                                                  ? Colors.white
-                                                  : isActive
-                                                      ? Colors.black87
-                                                      : Colors.grey.shade600,
-                                              fontWeight: isSelected
-                                                  ? FontWeight.bold
-                                                  : FontWeight.normal,
-                                            ),
+                    ),
+                    SizedBox(height: 8.h),
+                    Expanded(
+                      child: state.status == WorkHoursStatus.error
+                          ? Center(child: Text(state.errorMessage ?? 'حدث خطأ'))
+                          : _selectedDayNumber == null
+                              ? const Center(
+                                  child: Text('اختر يوماً لعرض الأوقات'))
+                              : Skeletonizer(
+                                  enabled:
+                                      state.status == WorkHoursStatus.loading &&
+                                          state.timeTable == null,
+                                  child: state.timeTable != null
+                                      ? GridView.builder(
+                                          itemCount:
+                                              state.timeTable!.daytimes.length,
+                                          padding: EdgeInsets.only(
+                                              bottom: 16.h, top: 4.h),
+                                          gridDelegate:
+                                              SliverGridDelegateWithFixedCrossAxisCount(
+                                            crossAxisCount: 3,
+                                            mainAxisSpacing: 12.h,
+                                            crossAxisSpacing: 12.w,
+                                            childAspectRatio: 2.5,
                                           ),
-                                          if (isSelected) ...[
-                                            SizedBox(width: 4.w),
-                                            Icon(
-                                              Icons.check_circle,
-                                              size: 16.sp,
-                                              color: Colors.white,
-                                            ),
-                                          ],
-                                        ],
-                                      ),
-                                    ),
-                                  );
-                                },
-                              )
-                            : const Center(
-                                child: Text('اختر يوماً لعرض الأوقات')),
-                      ),
-                      SizedBox(height: 16.h),
-                      Center(
-                        child: ElevatedButton(
-                          onPressed: _selectedTimes.isNotEmpty &&
-                                  _selectedDayNumber != null
-                              ? () {
-                                  // context.read<WorkHoursCubit>().updateTimeSlots(
-                                  //       _effectiveDoctorId,
-                                  //       _selectedDayNumber!,
-                                  //       _selectedTimes.toList(),
-                                  //     );
-                                  print(
-                                      'WorkHoursScreen: Confirm button pressed, selectedTimes=$_selectedTimes');
-                                }
-                              : null,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF00C4B4),
-                            padding: EdgeInsets.symmetric(
-                                horizontal: 24.w, vertical: 12.h),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12.r),
-                            ),
+                                          itemBuilder: (context, index) {
+                                            final timeSlot = state
+                                                .timeTable!.daytimes[index];
+                                            final bool isSelected =
+                                                _selectedTimes
+                                                    .contains(timeSlot.timeId);
+                                            final bool isActive =
+                                                timeSlot.active;
+                                            return GestureDetector(
+                                              onTap: () {
+                                                setState(() {
+                                                  if (isSelected) {
+                                                    _selectedTimes.remove(
+                                                        timeSlot.timeId);
+                                                  } else {
+                                                    _selectedTimes
+                                                        .add(timeSlot.timeId);
+                                                  }
+                                                  print(
+                                                      'WorkHoursScreen: Toggled timeSlot ${timeSlot.timeName}, isSelected=$isSelected, isActive=$isActive');
+                                                });
+                                              },
+                                              child: Container(
+                                                decoration: BoxDecoration(
+                                                  color: isSelected
+                                                      ? const Color(0xFF00C4B4)
+                                                      : isActive
+                                                          ? const Color(
+                                                              0xFFE0F7FA)
+                                                          : Colors
+                                                              .grey.shade300,
+                                                  borderRadius:
+                                                      BorderRadius.circular(
+                                                          12.r),
+                                                  border: isSelected
+                                                      ? Border.all(
+                                                          color: const Color(
+                                                              0xFF00C4B4),
+                                                          width: 2)
+                                                      : Border.all(
+                                                          color: Colors
+                                                              .grey.shade400),
+                                                  boxShadow: isSelected
+                                                      ? [
+                                                          BoxShadow(
+                                                            color:
+                                                                Colors.black26,
+                                                            blurRadius: 4,
+                                                            offset:
+                                                                const Offset(
+                                                                    0, 2),
+                                                          ),
+                                                        ]
+                                                      : [],
+                                                ),
+                                                alignment: Alignment.center,
+                                                padding: EdgeInsets.symmetric(
+                                                    horizontal: 4.w),
+                                                child: Row(
+                                                  mainAxisAlignment:
+                                                      MainAxisAlignment.center,
+                                                  children: [
+                                                    Text(
+                                                      timeSlot.timeName,
+                                                      style: TextStyle(
+                                                        fontSize: 14.sp,
+                                                        color: isSelected
+                                                            ? Colors.white
+                                                            : isActive
+                                                                ? Colors.black87
+                                                                : Colors.grey
+                                                                    .shade600,
+                                                        fontWeight: isSelected
+                                                            ? FontWeight.bold
+                                                            : FontWeight.normal,
+                                                      ),
+                                                    ),
+                                                    if (isSelected) ...[
+                                                      SizedBox(width: 4.w),
+                                                      Icon(
+                                                        Icons.check_circle,
+                                                        size: 16.sp,
+                                                        color: Colors.white,
+                                                      ),
+                                                    ],
+                                                  ],
+                                                ),
+                                              ),
+                                            );
+                                          },
+                                        )
+                                      : GridView.builder(
+                                          itemCount:
+                                              9, // Placeholder count for skeleton
+                                          padding: EdgeInsets.only(
+                                              bottom: 16.h, top: 4.h),
+                                          gridDelegate:
+                                              SliverGridDelegateWithFixedCrossAxisCount(
+                                            crossAxisCount: 3,
+                                            mainAxisSpacing: 12.h,
+                                            crossAxisSpacing: 12.w,
+                                            childAspectRatio: 2.5,
+                                          ),
+                                          itemBuilder: (context, index) {
+                                            return Container(
+                                              decoration: BoxDecoration(
+                                                color: Colors.grey.shade300,
+                                                borderRadius:
+                                                    BorderRadius.circular(12.r),
+                                                border: Border.all(
+                                                    color:
+                                                        Colors.grey.shade400),
+                                              ),
+                                              alignment: Alignment.center,
+                                              padding: EdgeInsets.symmetric(
+                                                  horizontal: 4.w),
+                                              child: Container(
+                                                width: 60.w,
+                                                height: 14.h,
+                                                color: Colors.grey.shade300,
+                                              ),
+                                            );
+                                          },
+                                        ),
+                                ),
+                    ),
+                    SizedBox(height: 16.h),
+                    Center(
+                      child: ElevatedButton(
+                        onPressed: _selectedTimes.isNotEmpty &&
+                                _selectedDayNumber != null
+                            ? () {
+                                // context.read<WorkHoursCubit>().updateTimeSlots(
+                                //       _effectiveDoctorId,
+                                //       _selectedDayNumber!,
+                                //       _selectedTimes.toList(),
+                                //     );
+                                print(
+                                    'WorkHoursScreen: Confirm button pressed, selectedTimes=$_selectedTimes');
+                              }
+                            : null,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF00C4B4),
+                          padding: EdgeInsets.symmetric(
+                              horizontal: 24.w, vertical: 12.h),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12.r),
                           ),
-                          child: Text(
-                            'تأكيد',
-                            style: TextStyle(
-                              fontSize: 16.sp,
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                            ),
+                        ),
+                        child: Text(
+                          'تأكيد',
+                          style: TextStyle(
+                            fontSize: 16.sp,
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
                       ),
-                    ],
-                  );
-                }
+                    ),
+                    SizedBox(height: 16.h),
+                  ],
+                );
               },
             ),
           ),
         ),
-        bottomNavigationBar: const BottomNavBarWidget(),
+        // bottomNavigationBar: const BottomNavBarWidget(),
       ),
     );
   }
