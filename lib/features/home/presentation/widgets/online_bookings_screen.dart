@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:doctors_shifa_call/core/utils/widgets/custom_app_bar_widget.dart';
 import 'package:doctors_shifa_call/core/utils/widgets/custom_nav_bar_widget.dart';
+import 'package:doctors_shifa_call/features/home/data/models/booking/booking.dart';
 import 'package:doctors_shifa_call/features/home/presentation/cubits/booking/online_bookings_cubit.dart';
 import 'package:doctors_shifa_call/features/home/presentation/cubits/booking/online_bookings_state.dart';
 
@@ -30,9 +31,7 @@ class _OnlineBookingsScreenState extends State<OnlineBookingsScreen> {
 
   void _fetchBookings() {
     final formattedDate = DateFormat('dd/M/yyyy').format(_selectedDate);
-    context
-        .read<OnlineBookingsCubit>()
-        .fetchBookings(widget.doctorId, formattedDate);
+    context.read<OnlineBookingsCubit>().fetchBookings(widget.doctorId, formattedDate);
   }
 
   Future<void> _pickDate() async {
@@ -149,8 +148,7 @@ class _OnlineBookingsScreenState extends State<OnlineBookingsScreen> {
               SizedBox(height: 8.h),
               Expanded(
                 child: Container(
-                  padding:
-                      EdgeInsets.symmetric(vertical: 12.h, horizontal: 8.w),
+                  padding: EdgeInsets.symmetric(vertical: 12.h, horizontal: 8.w),
                   decoration: BoxDecoration(
                     color: Color(0xffA5E1CB),
                     borderRadius: BorderRadius.circular(24.r),
@@ -160,8 +158,7 @@ class _OnlineBookingsScreenState extends State<OnlineBookingsScreen> {
                       if (state.status == BookingsStatus.error) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
-                              content: Text(
-                                  state.errorMessage ?? 'فشل في جلب الحجوزات')),
+                              content: Text(state.errorMessage ?? 'فشل في جلب الحجوزات')),
                         );
                       }
                     },
@@ -185,8 +182,7 @@ class _OnlineBookingsScreenState extends State<OnlineBookingsScreen> {
                         padding: EdgeInsets.only(bottom: 16.h),
                         itemBuilder: (context, index) {
                           final booking = state.bookings[index];
-                          final dateStr = DateFormat('d/M/yyyy')
-                              .format(DateTime.parse(booking.date));
+                          final dateStr = DateFormat('d/M/yyyy').format(DateTime.parse(booking.date));
                           final timeStr = DateFormat('hh:mm a', 'ar').format(
                               DateTime.parse('2025-01-01 ${booking.time}'));
                           return Padding(
@@ -197,6 +193,7 @@ class _OnlineBookingsScreenState extends State<OnlineBookingsScreen> {
                               dateStr: dateStr,
                               timeStr: timeStr,
                               onlineMeetingUrl: booking.onlineMeetingUrl,
+                              booking: booking,
                             ),
                           );
                         },
@@ -220,6 +217,7 @@ class _BookingItem extends StatelessWidget {
   final String dateStr;
   final String timeStr;
   final String onlineMeetingUrl;
+  final Booking booking;
 
   const _BookingItem({
     required this.patientName,
@@ -227,12 +225,12 @@ class _BookingItem extends StatelessWidget {
     required this.dateStr,
     required this.timeStr,
     required this.onlineMeetingUrl,
+    required this.booking,
   });
 
   Future<void> _launchMeetingUrl(BuildContext context) async {
     print('Attempting to launch Zoom URL: $onlineMeetingUrl');
 
-    // التحقق من أن الرابط صالح
     if (onlineMeetingUrl.isEmpty || !onlineMeetingUrl.startsWith('https://')) {
       print('Invalid Zoom URL: $onlineMeetingUrl');
       ScaffoldMessenger.of(context).showSnackBar(
@@ -243,7 +241,6 @@ class _BookingItem extends StatelessWidget {
 
     final Uri url = Uri.parse(onlineMeetingUrl);
 
-    // محاولة فتح الرابط في تطبيق Zoom
     try {
       if (await canLaunchUrl(url)) {
         bool launched = await launchUrl(
@@ -252,7 +249,6 @@ class _BookingItem extends StatelessWidget {
         );
         print('Launch in external application: $launched');
 
-        // إذا فشل فتح التطبيق، جرب platformDefault (قد يفتح المتصفح)
         if (!launched) {
           launched = await launchUrl(
             url,
@@ -281,10 +277,25 @@ class _BookingItem extends StatelessWidget {
     }
   }
 
+  // Convert 'd/M/yyyy' to 'yyyy-MM-dd'
+  String _formatIsoDate(String display) {
+    final parts = display.split('/'); // [d, M, yyyy]
+    return '${parts[2].padLeft(4, '0')}-${parts[1].padLeft(2, '0')}-${parts[0].padLeft(2, '0')}';
+  }
+
   @override
   Widget build(BuildContext context) {
     const Color mainGreen = Color(0xFF00C4B4);
     const Color whiteColor = Colors.white;
+
+    // Calculate video icon enablement
+    final now = DateTime.now();
+    // Parse booking date and time directly from booking.time
+    final bookingDateTime = DateTime.parse('${_formatIsoDate(dateStr)} ${booking.time}');
+    // Allow joining from 1 minute before to 1 minute after the appointment
+    final allowedStart = bookingDateTime.subtract(const Duration(minutes: 1));
+    final allowedEnd = bookingDateTime.add(const Duration(minutes: 1));
+    final isEnabled = now.isAfter(allowedStart) && now.isBefore(allowedEnd);
 
     return Container(
       decoration: BoxDecoration(
@@ -307,8 +318,7 @@ class _BookingItem extends StatelessWidget {
               children: [
                 Expanded(
                   child: Container(
-                    padding:
-                        EdgeInsets.symmetric(vertical: 6.h, horizontal: 8.w),
+                    padding: EdgeInsets.symmetric(vertical: 6.h, horizontal: 8.w),
                     decoration: BoxDecoration(
                       color: Color(0xffA5E1CB),
                       borderRadius: BorderRadius.circular(16.r),
@@ -333,8 +343,7 @@ class _BookingItem extends StatelessWidget {
                 SizedBox(width: 8.w),
                 Expanded(
                   child: Container(
-                    padding:
-                        EdgeInsets.symmetric(vertical: 6.h, horizontal: 8.w),
+                    padding: EdgeInsets.symmetric(vertical: 6.h, horizontal: 8.w),
                     decoration: BoxDecoration(
                       color: Color(0xffA5E1CB),
                       borderRadius: BorderRadius.circular(16.r),
@@ -364,8 +373,7 @@ class _BookingItem extends StatelessWidget {
                 SizedBox(width: 12.w),
                 Expanded(
                   child: Container(
-                    padding:
-                        EdgeInsets.symmetric(vertical: 6.h, horizontal: 8.w),
+                    padding: EdgeInsets.symmetric(vertical: 6.h, horizontal: 8.w),
                     decoration: BoxDecoration(
                       color: Color(0xffA5E1CB),
                       borderRadius: BorderRadius.circular(16.r),
@@ -390,8 +398,7 @@ class _BookingItem extends StatelessWidget {
                 SizedBox(width: 8.w),
                 Expanded(
                   child: Container(
-                    padding:
-                        EdgeInsets.symmetric(vertical: 6.h, horizontal: 8.w),
+                    padding: EdgeInsets.symmetric(vertical: 6.h, horizontal: 8.w),
                     decoration: BoxDecoration(
                       color: Color(0xffA5E1CB),
                       borderRadius: BorderRadius.circular(16.r),
@@ -425,26 +432,28 @@ class _BookingItem extends StatelessWidget {
                 ),
                 SizedBox(width: 12.w),
                 GestureDetector(
-                  onTap: () => _launchMeetingUrl(context),
-                  child: Container(
-                    width: 60.w,
-                    height: 60.h,
-                    decoration: BoxDecoration(
-                      // color: Color(0xffA5E1CB),
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.white,
-                          blurRadius: 4,
-                          offset: const Offset(0, 2),
+                  onTap: isEnabled ? () => _launchMeetingUrl(context) : null,
+                  child: Opacity(
+                    opacity: isEnabled ? 1.0 : 0.4,
+                    child: Container(
+                      width: 60.w,
+                      height: 60.h,
+                      decoration: const BoxDecoration(
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.white,
+                            blurRadius: 4,
+                            offset: Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Center(
+                        child: Image.asset(
+                          'assets/images/svgs/vid.png',
+                          width: 70.w,
+                          height: 70.h,
                         ),
-                      ],
-                    ),
-                    child: Center(
-                      child: Image.asset(
-                        'assets/images/svgs/vid.png',
-                        width: 70.w,
-                        height: 70.h,
                       ),
                     ),
                   ),
