@@ -1,7 +1,7 @@
 import 'package:doctors_shifa_call/features/home/data/models/work_hour/day.dart';
 import 'package:doctors_shifa_call/features/home/data/models/work_hour/doctors_time_table.dart';
 
-enum WorkHoursStatus { initial, loading, success, error }
+enum WorkHoursStatus { initial, loading, success, error, refresh }
 enum UpdateStatus { initial, loading, success, error }
 
 class WorkHoursState {

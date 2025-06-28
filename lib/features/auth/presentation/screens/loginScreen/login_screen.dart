@@ -3,6 +3,7 @@ import 'package:doctors_shifa_call/core/utils/constant/app_style.dart';
 import 'package:doctors_shifa_call/core/utils/constant/constants.dart';
 import 'package:doctors_shifa_call/features/auth/presentation/cubits/login_cubit.dart';
 import 'package:doctors_shifa_call/features/auth/presentation/cubits/login_state.dart';
+import 'package:doctors_shifa_call/features/home/presentation/screens/home_screen.dart';
 import 'package:doctors_shifa_call/generated/locale_keys.g.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/gestures.dart';
@@ -39,15 +40,22 @@ class _LoginScreenState extends State<LoginScreen> {
     return Scaffold(
       resizeToAvoidBottomInset: true,
       body: BlocConsumer<AuthCubit, AuthState>(
-        listener: (context, state) {
-          if (state.status == AuthStatus.success) {
-            Navigator.of(context).pushReplacementNamed(homeScreen);
-          } else if (state.status == AuthStatus.failure) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(state.errorMessage ?? 'فشل تسجيل الدخول')),
-            );
-          }
-        },
+  listener: (context, state) {
+    if (state.status == AuthStatus.success && state.loginResponse != null) {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(
+          builder: (_) => HomeScreen(
+            username: state.loginResponse!.userName,
+            doctorId: state.loginResponse!.doctorId.toString(),
+          ),
+        ),
+      );
+    } else if (state.status == AuthStatus.failure) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(state.errorMessage ?? 'فشل تسجيل الدخول')),
+      );
+    }
+  },
         builder: (context, state) {
           return SingleChildScrollView(
             child: SizedBox(
