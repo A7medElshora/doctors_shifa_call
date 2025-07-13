@@ -2,6 +2,8 @@ import 'package:carousel_slider/carousel_slider.dart';
 import 'package:doctors_shifa_call/core/utils/constant/app_color.dart';
 import 'package:doctors_shifa_call/core/utils/widgets/custom_app_bar_widget.dart';
 import 'package:doctors_shifa_call/core/utils/widgets/custom_nav_bar_widget.dart';
+import 'package:doctors_shifa_call/features/home/presentation/screens/price/price_screen.dart';
+import 'package:doctors_shifa_call/features/home/presentation/screens/settings/settings_screen.dart';
 import 'package:doctors_shifa_call/features/home/presentation/widgets/bookings_screen.dart';
 import 'package:doctors_shifa_call/features/home/presentation/widgets/work_hours_screen.dart';
 import 'package:flutter/material.dart';
@@ -81,7 +83,8 @@ class HomeScreen extends StatelessWidget {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (_) => WorkHoursScreen(doctorId: doctorId),
+                              builder: (_) =>
+                                  WorkHoursScreen(doctorId: doctorId),
                             ),
                           );
                         },
@@ -98,7 +101,8 @@ class HomeScreen extends StatelessWidget {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (_) => BookingsScreen(doctorId: doctorId),
+                              builder: (_) =>
+                                  BookingsScreen(doctorId: doctorId),
                             ),
                           );
                         },
@@ -109,9 +113,18 @@ class HomeScreen extends StatelessWidget {
                           width: 60.w,
                           height: 60.w,
                         ),
-                        title: 'المرضى',
+                        title: 'السعر',
                         subtitle: 'معرفة معلومات عن المرضى و مواعيد حجزهم',
-                        onTap: () {},
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => PriceScreen(
+                                doctorId: doctorId,
+                              ),
+                            ),
+                          );
+                        },
                       ),
                       _HomeCard(
                         iconWidget: Image.asset(
@@ -121,7 +134,14 @@ class HomeScreen extends StatelessWidget {
                         ),
                         title: 'الإعدادات',
                         subtitle: 'حجز مواعيدك في العيادة',
-                        onTap: () {},
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => SettingsScreen(),
+                            ),
+                          );
+                        },
                       ),
                     ],
                   ),

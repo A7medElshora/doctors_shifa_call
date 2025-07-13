@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:doctors_shifa_call/features/home/data/models/booking/booking.dart';
+import 'package:doctors_shifa_call/features/home/data/models/price/price_model.dart';
 import 'package:doctors_shifa_call/features/home/data/models/work_hour/day.dart';
 import 'package:doctors_shifa_call/features/home/data/models/work_hour/doctors_time_table.dart';
 import 'package:doctors_shifa_call/features/home/presentation/widgets/clinic_booking_screen.dart';
@@ -19,7 +20,7 @@ abstract class ApiService {
     @Query("pass") String password,
   );
 
-   @GET(ApiConstants.getDaysEndpoint)
+  @GET(ApiConstants.getDaysEndpoint)
   Future<List<Day>> getDays();
 
   @GET(ApiConstants.getDoctorTimeTableEndpoint)
@@ -31,9 +32,20 @@ abstract class ApiService {
   Future<void> updateDoctorTimeTable(
     @Body() DoctorTimeTable timeTable,
   );
-    @GET(ApiConstants.getDoctorReservationsEndpoint)
+  @GET(ApiConstants.getDoctorReservationsEndpoint)
   Future<List<Booking>> getDoctorReservations(
     @Query("doctor_id") String doctorId,
-    @Query("date") String date,
+    @Query("date") String startDate,
+    @Query("dateto") String endDate,
+  );
+
+ @GET(ApiConstants.getDoctorPricesEndpoint)
+  Future<List<PriceModel>> getDoctorPrices(
+    @Query("doctor_id") String doctorId,
+  );
+  
+  @POST(ApiConstants.updateDoctorPricesEndpoint)
+  Future<void> updateDoctorPrices(
+    @Body() PriceModel priceModel,
   );
 }

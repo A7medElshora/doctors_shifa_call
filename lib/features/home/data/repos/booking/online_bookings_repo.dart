@@ -8,9 +8,9 @@ class OnlineBookingsRepo {
 
   OnlineBookingsRepo(this._apiService);
 
-  Future<ApiResult<List<Booking>>> getDoctorReservations(String doctorId, String date) async {
+  Future<ApiResult<List<Booking>>> getDoctorReservations(String doctorId, String startDate, String endDate) async {
     try {
-      final bookings = await _apiService.getDoctorReservations(doctorId, date);
+      final bookings = await _apiService.getDoctorReservations(doctorId, startDate, endDate);
       return ApiResult.success(bookings);
     } catch (e) {
       return ApiResult.failure(ServerFailure(e.toString()));

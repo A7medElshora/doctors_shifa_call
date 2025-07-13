@@ -8,4 +8,9 @@ class ApiConstants {
       'doctor_times/update_doctor_time_table';
   static const String getDoctorReservationsEndpoint =
       'doctor_times/get_doctor_reservation';
+
+  static const String getDoctorPricesEndpoint =
+      'doctore_values/get_doctor_visit_value';
+  static const String updateDoctorPricesEndpoint =
+      'doctore_values/update_doctor_visit_value';
 }

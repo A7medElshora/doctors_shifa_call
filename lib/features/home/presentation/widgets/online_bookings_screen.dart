@@ -19,7 +19,8 @@ class OnlineBookingsScreen extends StatefulWidget {
 }
 
 class _OnlineBookingsScreenState extends State<OnlineBookingsScreen> {
-  DateTime _selectedDate = DateTime.now();
+  DateTime _startDate = DateTime.now();
+  DateTime _endDate = DateTime.now();
 
   @override
   void initState() {
@@ -30,22 +31,43 @@ class _OnlineBookingsScreenState extends State<OnlineBookingsScreen> {
   }
 
   void _fetchBookings() {
-    final formattedDate = DateFormat('dd/M/yyyy').format(_selectedDate);
-    context.read<OnlineBookingsCubit>().fetchBookings(widget.doctorId, formattedDate);
+    final formattedStartDate = DateFormat('dd/M/yyyy').format(_startDate);
+    final formattedEndDate = DateFormat('dd/M/yyyy').format(_endDate);
+    context
+        .read<OnlineBookingsCubit>()
+        .fetchBookings(widget.doctorId, formattedStartDate, formattedEndDate);
   }
 
-  Future<void> _pickDate() async {
-    DateTime now = DateTime.now();
+  Future<void> _pickStartDate() async {
     final DateTime? picked = await showDatePicker(
       context: context,
-      initialDate: _selectedDate,
-      firstDate: DateTime(now.year - 1),
-      lastDate: DateTime(now.year + 1),
+      initialDate: _startDate,
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2100),
       locale: const Locale('ar'),
     );
-    if (picked != null && picked != _selectedDate) {
+    if (picked != null && picked != _startDate) {
       setState(() {
-        _selectedDate = picked;
+        _startDate = picked;
+        if (_startDate.isAfter(_endDate)) {
+          _endDate = _startDate;
+        }
+        _fetchBookings();
+      });
+    }
+  }
+
+  Future<void> _pickEndDate() async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: _endDate,
+      firstDate: _startDate,
+      lastDate: DateTime(2100),
+      locale: const Locale('ar'),
+    );
+    if (picked != null && picked != _endDate) {
+      setState(() {
+        _endDate = picked;
         _fetchBookings();
       });
     }
@@ -62,7 +84,7 @@ class _OnlineBookingsScreenState extends State<OnlineBookingsScreen> {
       appBar: PreferredSize(
         preferredSize: Size.fromHeight(60.h),
         child: CustomAppBar(
-          title: 'جدول الحجوزات أونلاين',
+          title: ' الحجز الأونلاين',
           showBackInLeading: true,
           showBackButton: true,
           onBackPressed: () {
@@ -81,7 +103,7 @@ class _OnlineBookingsScreenState extends State<OnlineBookingsScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'اختر التاريخ',
+                'اختر الفترة الزمنية',
                 style: TextStyle(
                   fontSize: 16.sp,
                   fontWeight: FontWeight.bold,
@@ -91,46 +113,64 @@ class _OnlineBookingsScreenState extends State<OnlineBookingsScreen> {
               SizedBox(height: 8.h),
               Row(
                 children: [
-                  SizedBox(width: 37.w),
-                  GestureDetector(
-                    onTap: _pickDate,
-                    child: Container(
-                      height: 65.h,
-                      width: 330.w,
-                      padding: EdgeInsets.symmetric(horizontal: 12.w),
-                      decoration: BoxDecoration(
-                        color: whiteColor,
-                        borderRadius: BorderRadius.circular(24.r),
-                        border: Border.all(color: mainGreen, width: 1.5),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black12,
-                            blurRadius: 4,
-                            offset: const Offset(-3, 5),
-                          ),
-                        ],
-                      ),
-                      child: Row(
-                        children: [
-                          SizedBox(width: 8.w),
-                          Expanded(
-                            child: Center(
-                              child: Text(
-                                DateFormat('MM/dd/yyyy').format(_selectedDate),
-                                style: TextStyle(
-                                  fontSize: 20.sp,
-                                  color: Colors.grey.shade600,
-                                ),
-                              ),
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: _pickStartDate,
+                      child: Container(
+                        height: 65.h,
+                        padding: EdgeInsets.symmetric(horizontal: 12.w),
+                        decoration: BoxDecoration(
+                          color: whiteColor,
+                          borderRadius: BorderRadius.circular(24.r),
+                          border: Border.all(color: mainGreen, width: 1.5),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black12,
+                              blurRadius: 4,
+                              offset: const Offset(-3, 5),
+                            ),
+                          ],
+                        ),
+                        child: Center(
+                          child: Text(
+                            'من: ${DateFormat('MM/dd/yyyy').format(_startDate)}',
+                            style: TextStyle(
+                              fontSize: 16.sp,
+                              color: Colors.grey.shade600,
                             ),
                           ),
-                          const Spacer(),
-                          Image.asset(
-                            'assets/images/date_picker.png',
-                            width: 55.w,
-                            height: 55.w,
+                        ),
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: 8.w),
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: _pickEndDate,
+                      child: Container(
+                        height: 65.h,
+                        padding: EdgeInsets.symmetric(horizontal: 12.w),
+                        decoration: BoxDecoration(
+                          color: whiteColor,
+                          borderRadius: BorderRadius.circular(24.r),
+                          border: Border.all(color: mainGreen, width: 1.5),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black12,
+                              blurRadius: 4,
+                              offset: const Offset(-3, 5),
+                            ),
+                          ],
+                        ),
+                        child: Center(
+                          child: Text(
+                            'إلى: ${DateFormat('MM/dd/yyyy').format(_endDate)}',
+                            style: TextStyle(
+                              fontSize: 16.sp,
+                              color: Colors.grey.shade600,
+                            ),
                           ),
-                        ],
+                        ),
                       ),
                     ),
                   ),
@@ -138,7 +178,7 @@ class _OnlineBookingsScreenState extends State<OnlineBookingsScreen> {
               ),
               SizedBox(height: 16.h),
               Text(
-                'حجوزات اليوم:',
+                'حجوزات الفترة:',
                 style: TextStyle(
                   fontSize: 16.sp,
                   fontWeight: FontWeight.bold,
@@ -148,7 +188,8 @@ class _OnlineBookingsScreenState extends State<OnlineBookingsScreen> {
               SizedBox(height: 8.h),
               Expanded(
                 child: Container(
-                  padding: EdgeInsets.symmetric(vertical: 12.h, horizontal: 8.w),
+                  padding:
+                      EdgeInsets.symmetric(vertical: 12.h, horizontal: 8.w),
                   decoration: BoxDecoration(
                     color: Color(0xffA5E1CB),
                     borderRadius: BorderRadius.circular(24.r),
@@ -158,7 +199,8 @@ class _OnlineBookingsScreenState extends State<OnlineBookingsScreen> {
                       if (state.status == BookingsStatus.error) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
-                              content: Text(state.errorMessage ?? 'فشل في جلب الحجوزات')),
+                              content: Text(
+                                  state.errorMessage ?? 'فشل في جلب الحجوزات')),
                         );
                       }
                     },
@@ -169,7 +211,7 @@ class _OnlineBookingsScreenState extends State<OnlineBookingsScreen> {
                       if (state.bookings.isEmpty) {
                         return Center(
                           child: Text(
-                            'لا توجد حجوزات لهذا اليوم',
+                            'لا توجد حجوزات لهذه الفترة',
                             style: TextStyle(
                               fontSize: 14.sp,
                               color: Colors.grey.shade600,
@@ -182,7 +224,8 @@ class _OnlineBookingsScreenState extends State<OnlineBookingsScreen> {
                         padding: EdgeInsets.only(bottom: 16.h),
                         itemBuilder: (context, index) {
                           final booking = state.bookings[index];
-                          final dateStr = DateFormat('d/M/yyyy').format(DateTime.parse(booking.date));
+                          final dateStr = DateFormat('d/M/yyyy')
+                              .format(DateTime.parse(booking.date));
                           final timeStr = DateFormat('hh:mm a', 'ar').format(
                               DateTime.parse('2025-01-01 ${booking.time}'));
                           return Padding(
@@ -277,9 +320,8 @@ class _BookingItem extends StatelessWidget {
     }
   }
 
-  // Convert 'd/M/yyyy' to 'yyyy-MM-dd'
   String _formatIsoDate(String display) {
-    final parts = display.split('/'); // [d, M, yyyy]
+    final parts = display.split('/');
     return '${parts[2].padLeft(4, '0')}-${parts[1].padLeft(2, '0')}-${parts[0].padLeft(2, '0')}';
   }
 
@@ -288,11 +330,9 @@ class _BookingItem extends StatelessWidget {
     const Color mainGreen = Color(0xFF00C4B4);
     const Color whiteColor = Colors.white;
 
-    // Calculate video icon enablement
     final now = DateTime.now();
-    // Parse booking date and time directly from booking.time
-    final bookingDateTime = DateTime.parse('${_formatIsoDate(dateStr)} ${booking.time}');
-    // Allow joining from 1 minute before to 1 minute after the appointment
+    final bookingDateTime =
+        DateTime.parse('${_formatIsoDate(dateStr)} ${booking.time}');
     final allowedStart = bookingDateTime.subtract(const Duration(minutes: 1));
     final allowedEnd = bookingDateTime.add(const Duration(minutes: 1));
     final isEnabled = now.isAfter(allowedStart) && now.isBefore(allowedEnd);
@@ -318,7 +358,8 @@ class _BookingItem extends StatelessWidget {
               children: [
                 Expanded(
                   child: Container(
-                    padding: EdgeInsets.symmetric(vertical: 6.h, horizontal: 8.w),
+                    padding:
+                        EdgeInsets.symmetric(vertical: 6.h, horizontal: 8.w),
                     decoration: BoxDecoration(
                       color: Color(0xffA5E1CB),
                       borderRadius: BorderRadius.circular(16.r),
@@ -343,7 +384,8 @@ class _BookingItem extends StatelessWidget {
                 SizedBox(width: 8.w),
                 Expanded(
                   child: Container(
-                    padding: EdgeInsets.symmetric(vertical: 6.h, horizontal: 8.w),
+                    padding:
+                        EdgeInsets.symmetric(vertical: 6.h, horizontal: 8.w),
                     decoration: BoxDecoration(
                       color: Color(0xffA5E1CB),
                       borderRadius: BorderRadius.circular(16.r),
@@ -373,7 +415,8 @@ class _BookingItem extends StatelessWidget {
                 SizedBox(width: 12.w),
                 Expanded(
                   child: Container(
-                    padding: EdgeInsets.symmetric(vertical: 6.h, horizontal: 8.w),
+                    padding:
+                        EdgeInsets.symmetric(vertical: 6.h, horizontal: 8.w),
                     decoration: BoxDecoration(
                       color: Color(0xffA5E1CB),
                       borderRadius: BorderRadius.circular(16.r),
@@ -398,7 +441,8 @@ class _BookingItem extends StatelessWidget {
                 SizedBox(width: 8.w),
                 Expanded(
                   child: Container(
-                    padding: EdgeInsets.symmetric(vertical: 6.h, horizontal: 8.w),
+                    padding:
+                        EdgeInsets.symmetric(vertical: 6.h, horizontal: 8.w),
                     decoration: BoxDecoration(
                       color: Color(0xffA5E1CB),
                       borderRadius: BorderRadius.circular(16.r),

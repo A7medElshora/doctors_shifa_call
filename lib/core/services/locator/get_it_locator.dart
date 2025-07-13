@@ -1,10 +1,13 @@
 import 'package:dio/dio.dart';
 import 'package:doctors_shifa_call/core/export.dart';
+import 'package:doctors_shifa_call/core/networking/api_service.dart';
 import 'package:doctors_shifa_call/features/auth/data/repos/login_repo.dart';
 import 'package:doctors_shifa_call/features/auth/data/repos/login_repo_imp.dart';
 import 'package:doctors_shifa_call/features/auth/presentation/cubits/login_cubit.dart';
 import 'package:doctors_shifa_call/features/home/data/repos/booking/online_bookings_repo.dart';
+import 'package:doctors_shifa_call/features/home/data/repos/price/price_repo.dart';
 import 'package:doctors_shifa_call/features/home/presentation/cubits/booking/online_bookings_cubit.dart';
+import 'package:doctors_shifa_call/features/home/presentation/cubits/price/price_cubit.dart';
 import 'package:get_it/get_it.dart';
 
 class ServicesLocator {
@@ -25,9 +28,14 @@ class ServicesLocator {
     // online bookings
     locator.registerLazySingleton<OnlineBookingsRepo>(() => OnlineBookingsRepo(locator<ApiService>()));
     locator.registerLazySingleton<OnlineBookingsCubit>(() => OnlineBookingsCubit(locator<OnlineBookingsRepo>()));
+
+    // prices
+    locator.registerLazySingleton<PriceRepo>(() => PriceRepo(locator<ApiService>()));
+    locator.registerLazySingleton<PriceCubit>(() => PriceCubit(locator<PriceRepo>()));
   }
 
   static IntroAppCubit get introAppCubit => locator<IntroAppCubit>();
   static AuthCubit get authCubit => locator<AuthCubit>();
   static OnlineBookingsCubit get onlineBookingsCubit => locator<OnlineBookingsCubit>();
+  static PriceCubit get priceCubit => locator<PriceCubit>();
 }

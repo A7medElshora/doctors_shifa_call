@@ -7,9 +7,9 @@ class OnlineBookingsCubit extends Cubit<OnlineBookingsState> {
 
   OnlineBookingsCubit(this._repo) : super(OnlineBookingsState());
 
-  Future<void> fetchBookings(String doctorId, String date) async {
+  Future<void> fetchBookings(String doctorId, String startDate, String endDate) async {
     emit(state.copyWith(status: BookingsStatus.loading));
-    final result = await _repo.getDoctorReservations(doctorId, date);
+    final result = await _repo.getDoctorReservations(doctorId, startDate, endDate);
     result.when(
       success: (bookings) {
         emit(state.copyWith(
