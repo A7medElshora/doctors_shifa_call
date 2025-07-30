@@ -16,6 +16,12 @@ class Booking {
   final int doctorId;
   @JsonKey(name: 'online_meeting_url')
   final String onlineMeetingUrl;
+  @JsonKey(name: 'id')
+  final int? reservationId;
+  @JsonKey(name: 'Termination_status')
+  final String terminationStatus;
+  @JsonKey(name: 'Termination_status_id')
+  final int? terminationStatusId;
 
   Booking({
     required this.patientName,
@@ -25,8 +31,28 @@ class Booking {
     required this.paymentDone,
     required this.doctorId,
     required this.onlineMeetingUrl,
+    this.reservationId,
+    required this.terminationStatus,
+    this.terminationStatusId,
   });
 
   factory Booking.fromJson(Map<String, dynamic> json) => _$BookingFromJson(json);
   Map<String, dynamic> toJson() => _$BookingToJson(this);
+}
+@JsonSerializable()
+class TerminationStatus {
+  @JsonKey(name: 'Id')
+  final int id;
+
+  @JsonKey(name: 'Termination_status')
+  final String status;
+
+  TerminationStatus({
+    required this.id,
+    required this.status,
+  });
+
+  factory TerminationStatus.fromJson(Map<String, dynamic> json) =>
+      _$TerminationStatusFromJson(json);
+  Map<String, dynamic> toJson() => _$TerminationStatusToJson(this);
 }

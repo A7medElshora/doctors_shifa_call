@@ -53,36 +53,36 @@ class CustomAppBar extends StatelessWidget {
             ),
       title: title != null ? Text(title!) : null,
       centerTitle: true,
-      actions: [
-        if (showBell)
-          IconButton(
-            icon: Image.asset('assets/images/bell.png', width: 28, height: 28),
-            onPressed: () {},
-          ),
-        if (showLogoutIcon)
-          IconButton(
-            icon: const Icon(Icons.logout, color: Colors.red, size: 28),
-            onPressed: onLogoutPressed,
-            style: ButtonStyle(
-              backgroundColor: WidgetStateProperty.all<Color>(Colors.white),
-              shape: WidgetStateProperty.all<OutlinedBorder>(
-                const CircleBorder(),
-              ),
-            ),
-          ),
-        if (!showGridInLeading)
-          IconButton(
-            icon:
-                const Icon(Icons.grid_view, color: Color(0xFF00C4B4), size: 28),
-            onPressed: onGridPressed,
-            style: ButtonStyle(
-              backgroundColor: WidgetStateProperty.all<Color>(Colors.white),
-              shape: WidgetStateProperty.all<OutlinedBorder>(
-                const CircleBorder(),
-              ),
-            ),
-          ),
-      ],
+      // actions: [
+      //   if (showBell)
+      //     IconButton(
+      //       icon: Image.asset('assets/images/bell.png', width: 28, height: 28),
+      //       onPressed: () {},
+      //     ),
+      //   if (showLogoutIcon)
+      //     IconButton(
+      //       icon: const Icon(Icons.logout, color: Colors.red, size: 28),
+      //       onPressed: onLogoutPressed,
+      //       style: ButtonStyle(
+      //         backgroundColor: WidgetStateProperty.all<Color>(Colors.white),
+      //         shape: WidgetStateProperty.all<OutlinedBorder>(
+      //           const CircleBorder(),
+      //         ),
+      //       ),
+      //     ),
+      //   if (!showGridInLeading)
+      //     IconButton(
+      //       icon:
+      //           const Icon(Icons.grid_view, color: Color(0xFF00C4B4), size: 28),
+      //       onPressed: onGridPressed,
+      //       style: ButtonStyle(
+      //         backgroundColor: WidgetStateProperty.all<Color>(Colors.white),
+      //         shape: WidgetStateProperty.all<OutlinedBorder>(
+      //           const CircleBorder(),
+      //         ),
+      //       ),
+      //     ),
+      // ],
     );
   }
 }

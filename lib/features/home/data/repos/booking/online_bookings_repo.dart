@@ -11,9 +11,12 @@ class OnlineBookingsRepo {
   Future<ApiResult<List<Booking>>> getDoctorReservations(String doctorId, String startDate, String endDate) async {
     try {
       final bookings = await _apiService.getDoctorReservations(doctorId, startDate, endDate);
+      if (bookings == null || bookings.isEmpty) {
+        return ApiResult.failure(ServerFailure('لا توجد حجوزات متاحة لهذه الفترة'));
+      }
       return ApiResult.success(bookings);
     } catch (e) {
-      return ApiResult.failure(ServerFailure(e.toString()));
+      return ApiResult.failure(ServerFailure('فشل في جلب الحجوزات: ${e.toString()}'));
     }
   }
 }

@@ -1,7 +1,4 @@
-import 'package:carousel_slider/carousel_slider.dart';
 import 'package:doctors_shifa_call/core/utils/constant/app_color.dart';
-import 'package:doctors_shifa_call/core/utils/widgets/custom_app_bar_widget.dart';
-import 'package:doctors_shifa_call/core/utils/widgets/custom_nav_bar_widget.dart';
 import 'package:doctors_shifa_call/features/home/presentation/screens/price/price_screen.dart';
 import 'package:doctors_shifa_call/features/home/presentation/screens/settings/settings_screen.dart';
 import 'package:doctors_shifa_call/features/home/presentation/widgets/bookings_screen.dart';
@@ -25,25 +22,25 @@ class HomeScreen extends StatelessWidget {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        appBar: PreferredSize(
-          preferredSize: Size.fromHeight(60.h),
-          child: CustomAppBar(
-            showBell: true,
-            showUserIcon: true,
-            showGridInLeading: false,
-            showBackInLeading: false,
-            showBackButton: false,
-            onBackPressed: () {},
-            onGridPressed: () {},
-          ),
-        ),
+        // appBar: PreferredSize(
+        //   preferredSize: Size.fromHeight(60.h),
+        //   child: CustomAppBar(
+        //     showBell: true,
+        //     showUserIcon: true,
+        //     showGridInLeading: false,
+        //     showBackInLeading: false,
+        //     showBackButton: false,
+        //     onBackPressed: () {},
+        //     onGridPressed: () {},
+        //   ),
+        // ),
         body: SafeArea(
           child: Padding(
             padding: EdgeInsets.symmetric(horizontal: 16.w),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                SizedBox(height: 16.h),
+                SizedBox(height: 30.h),
                 RichText(
                   text: TextSpan(
                     style: TextStyle(
@@ -61,13 +58,23 @@ class HomeScreen extends StatelessWidget {
                     ],
                   ),
                 ),
-                SizedBox(height: 16.h),
-                CarouselWidget(),
-                SizedBox(height: 24.h),
+                SizedBox(height: 40.h),
+                Container(
+                  height: 150.h,
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(16.r),
+                    image: const DecorationImage(
+                      image: AssetImage('assets/images/slider1.png'),
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                ),
+                SizedBox(height: 40.h),
                 Expanded(
                   child: GridView.count(
                     crossAxisCount: 2,
-                    mainAxisSpacing: 23.h,
+                    mainAxisSpacing: 30.h,
                     crossAxisSpacing: 16.w,
                     childAspectRatio: 0.9,
                     children: [
@@ -114,7 +121,7 @@ class HomeScreen extends StatelessWidget {
                           height: 60.w,
                         ),
                         title: 'السعر',
-                        subtitle: 'معرفة معلومات عن المرضى و مواعيد حجزهم',
+                        subtitle: 'تحديث أسعار الكشف',
                         onTap: () {
                           Navigator.push(
                             context,
@@ -133,7 +140,7 @@ class HomeScreen extends StatelessWidget {
                           height: 60.w,
                         ),
                         title: 'الإعدادات',
-                        subtitle: 'حجز مواعيدك في العيادة',
+                        subtitle: 'الاعدادات وتسجيل الخروج',
                         onTap: () {
                           Navigator.push(
                             context,
@@ -150,7 +157,6 @@ class HomeScreen extends StatelessWidget {
             ),
           ),
         ),
-        bottomNavigationBar: const BottomNavBarWidget(),
       ),
     );
   }
@@ -212,74 +218,6 @@ class _HomeCard extends StatelessWidget {
           ],
         ),
       ),
-    );
-  }
-}
-
-class CarouselWidget extends StatefulWidget {
-  const CarouselWidget({super.key});
-
-  @override
-  State<CarouselWidget> createState() => _CarouselWidgetState();
-}
-
-class _CarouselWidgetState extends State<CarouselWidget> {
-  final List<String> _placeholderImages = const [
-    'assets/images/slider1.png',
-    'assets/images/dr1.png',
-  ];
-
-  int _current = 0;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        CarouselSlider(
-          items: _placeholderImages.map((image) {
-            return Container(
-              margin: EdgeInsets.all(5.w),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(16.r),
-                image: DecorationImage(
-                  image: AssetImage(image),
-                  fit: BoxFit.cover,
-                ),
-              ),
-            );
-          }).toList(),
-          options: CarouselOptions(
-            height: 150.h,
-            autoPlay: true,
-            autoPlayInterval: const Duration(seconds: 3),
-            enlargeCenterPage: true,
-            aspectRatio: 16 / 9,
-            viewportFraction: 0.8,
-            onPageChanged: (index, reason) {
-              setState(() {
-                _current = index;
-              });
-            },
-          ),
-        ),
-        SizedBox(height: 8.h),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: _placeholderImages.asMap().entries.map((entry) {
-            return Container(
-              width: 8.w,
-              height: 8.w,
-              margin: EdgeInsets.symmetric(horizontal: 4.w),
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: _current == entry.key
-                    ? const Color(0xFF00C4B4)
-                    : Colors.grey.shade300,
-              ),
-            );
-          }).toList(),
-        ),
-      ],
     );
   }
 }

@@ -12,17 +12,23 @@ class OnlineBookingsCubit extends Cubit<OnlineBookingsState> {
     final result = await _repo.getDoctorReservations(doctorId, startDate, endDate);
     result.when(
       success: (bookings) {
+        print('Bookings fetched successfully: ${bookings.length} bookings');
         emit(state.copyWith(
           status: BookingsStatus.success,
           bookings: bookings,
         ));
       },
       failure: (error) {
+        print('Failed to fetch bookings: ${error.errMessages}');
         emit(state.copyWith(
           status: BookingsStatus.error,
-          errorMessage: error.errMessages,
+          errorMessage: error.errMessages ?? 'حدث خطأ أثناء جلب الحجوزات',
         ));
       },
     );
+  }
+
+  Future<void> refreshBookings(String doctorId, String startDate, String endDate) async {
+    await fetchBookings(doctorId, startDate, endDate);
   }
 }

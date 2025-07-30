@@ -32,7 +32,7 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   void initState() {
     super.initState();
-    context.read<AuthCubit>().checkLoginStatus();
+    // تمت إزالة context.read<AuthCubit>().checkLoginStatus();
   }
 
   @override
@@ -40,22 +40,22 @@ class _LoginScreenState extends State<LoginScreen> {
     return Scaffold(
       resizeToAvoidBottomInset: true,
       body: BlocConsumer<AuthCubit, AuthState>(
-  listener: (context, state) {
-    if (state.status == AuthStatus.success && state.loginResponse != null) {
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(
-          builder: (_) => HomeScreen(
-            username: state.loginResponse!.userName,
-            doctorId: state.loginResponse!.doctorId.toString(),
-          ),
-        ),
-      );
-    } else if (state.status == AuthStatus.failure) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(state.errorMessage ?? 'فشل تسجيل الدخول')),
-      );
-    }
-  },
+        listener: (context, state) {
+          if (state.status == AuthStatus.success && state.loginResponse != null) {
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(
+                builder: (_) => HomeScreen(
+                  username: state.loginResponse!.userName,
+                  doctorId: state.loginResponse!.doctorId.toString(),
+                ),
+              ),
+            );
+          } else if (state.status == AuthStatus.failure) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(state.errorMessage ?? 'فشل تسجيل الدخول')),
+            );
+          }
+        },
         builder: (context, state) {
           return SingleChildScrollView(
             child: SizedBox(

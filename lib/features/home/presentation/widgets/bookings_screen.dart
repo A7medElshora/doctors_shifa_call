@@ -73,7 +73,8 @@ class BookingsScreen extends StatelessWidget {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (_) => OnlineBookingsScreen(doctorId: doctorId),
+                        builder: (_) =>
+                            OnlineBookingsScreen(doctorId: doctorId),
                       ),
                     );
                   },
@@ -82,7 +83,7 @@ class BookingsScreen extends StatelessWidget {
             ),
           ),
         ),
-        bottomNavigationBar: const BottomNavBarWidget(),
+        // bottomNavigationBar: const BottomNavBarWidget(),
       ),
     );
   }
