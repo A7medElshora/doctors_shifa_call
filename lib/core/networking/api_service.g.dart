@@ -269,12 +269,12 @@ class _ApiService implements ApiService {
   }
 
   @override
-  Future<List<Booking>> getTerminationStatuses() async {
+  Future<List<TerminationStatus>> getTerminationStatuses() async {
     final _extra = <String, dynamic>{};
     final queryParameters = <String, dynamic>{};
     final _headers = <String, dynamic>{};
     const Map<String, dynamic>? _data = null;
-    final _options = _setStreamType<List<Booking>>(Options(
+    final _options = _setStreamType<List<TerminationStatus>>(Options(
       method: 'GET',
       headers: _headers,
       extra: _extra,
@@ -291,10 +291,11 @@ class _ApiService implements ApiService {
           baseUrl,
         )));
     final _result = await _dio.fetch<List<dynamic>>(_options);
-    late List<Booking> _value;
+    late List<TerminationStatus> _value;
     try {
       _value = _result.data!
-          .map((dynamic i) => Booking.fromJson(i as Map<String, dynamic>))
+          .map((dynamic i) =>
+              TerminationStatus.fromJson(i as Map<String, dynamic>))
           .toList();
     } on Object catch (e, s) {
       errorLogger?.logError(e, s, _options);

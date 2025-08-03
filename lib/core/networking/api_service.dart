@@ -52,8 +52,9 @@ abstract class ApiService {
   Future<void> updateDoctorPrices(
     @Body() PriceModel priceModel,
   );
+
   @GET('reservations/get_termination_status')
-  Future<List<Booking>> getTerminationStatuses();
+  Future<List<TerminationStatus>> getTerminationStatuses();
 
   @GET('reservations/update_status')
   Future<void> updateBookingStatus(

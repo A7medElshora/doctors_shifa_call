@@ -35,7 +35,8 @@ class _OnlineBookingsScreenState extends State<OnlineBookingsScreen> {
   void _fetchBookings() {
     final formattedStartDate = DateFormat('dd/M/yyyy').format(_startDate);
     final formattedEndDate = DateFormat('dd/M/yyyy').format(_endDate);
-    BlocProvider.of<OnlineBookingsCubit>(context).fetchBookings(widget.doctorId, formattedStartDate, formattedEndDate);
+    BlocProvider.of<OnlineBookingsCubit>(context)
+        .fetchBookings(widget.doctorId, formattedStartDate, formattedEndDate);
   }
 
   Future<void> _pickStartDate() async {
@@ -240,7 +241,8 @@ class _OnlineBookingsScreenState extends State<OnlineBookingsScreen> {
                                 visitType: booking.visitType,
                                 dateStr: dateStr,
                                 timeStr: timeStr,
-                                onlineMeetingUrl: booking.onlineMeetingUrl ?? '',
+                                onlineMeetingUrl:
+                                    booking.onlineMeetingUrl ?? '',
                                 booking: booking,
                                 onStatusUpdate: () {
                                   final formattedStartDate =
@@ -250,10 +252,10 @@ class _OnlineBookingsScreenState extends State<OnlineBookingsScreen> {
                                       DateFormat('dd/M/yyyy').format(_endDate);
                                   BlocProvider.of<OnlineBookingsCubit>(context)
                                       .refreshBookings(
-                                        widget.doctorId,
-                                        formattedStartDate,
-                                        formattedEndDate,
-                                      );
+                                    widget.doctorId,
+                                    formattedStartDate,
+                                    formattedEndDate,
+                                  );
                                 },
                               ),
                             );
@@ -377,8 +379,8 @@ class _BookingItem extends StatelessWidget {
               hint: const Text('اختر الحالة'),
               items: state.terminationStatuses.map((status) {
                 return DropdownMenuItem<int>(
-                  value: status.terminationStatusId,
-                  child: Text(status.terminationStatus ?? 'غير محدد'),
+                  value: status.id,
+                  child: Text(status.status),
                 );
               }).toList(),
               onChanged: (value) async {

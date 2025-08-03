@@ -1,11 +1,10 @@
-
 import 'package:doctors_shifa_call/features/home/data/models/booking/booking.dart';
 
 enum TerminationStatusStateStatus { initial, loading, success, error }
 
 class TerminationStatusState {
   final TerminationStatusStateStatus status;
-  final List<Booking> terminationStatuses;
+  final List<TerminationStatus> terminationStatuses;
   final String? errorMessage;
 
   TerminationStatusState({
@@ -16,7 +15,7 @@ class TerminationStatusState {
 
   TerminationStatusState copyWith({
     TerminationStatusStateStatus? status,
-    List<Booking>? terminationStatuses,
+    List<TerminationStatus>? terminationStatuses,
     String? errorMessage,
   }) {
     return TerminationStatusState(
