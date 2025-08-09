@@ -14,7 +14,7 @@ class _ApiService implements ApiService {
     this.baseUrl,
     this.errorLogger,
   }) {
-    baseUrl ??= 'https://188.245.90.186:44300/webapi/';
+    baseUrl ??= 'https://138.199.239.20:44302/webapi/';
   }
 
   final Dio _dio;
