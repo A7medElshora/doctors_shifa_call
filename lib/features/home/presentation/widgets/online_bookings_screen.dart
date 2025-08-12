@@ -77,7 +77,7 @@ class _OnlineBookingsScreenState extends State<OnlineBookingsScreen> {
   @override
   Widget build(BuildContext context) {
     const Color mainGreen = Color(0xFF00C4B4);
-    const Color whiteColor = Colors.white;
+    const Color white = Colors.white;
 
     return BlocProvider<TerminationStatusCubit>(
       create: (context) => TerminationStatusCubit(
@@ -124,7 +124,7 @@ class _OnlineBookingsScreenState extends State<OnlineBookingsScreen> {
                           height: 65.h,
                           padding: EdgeInsets.symmetric(horizontal: 12.w),
                           decoration: BoxDecoration(
-                            color: whiteColor,
+                            color: white,
                             borderRadius: BorderRadius.circular(24.r),
                             border: Border.all(color: mainGreen, width: 1.5),
                             boxShadow: [
@@ -155,7 +155,7 @@ class _OnlineBookingsScreenState extends State<OnlineBookingsScreen> {
                           height: 65.h,
                           padding: EdgeInsets.symmetric(horizontal: 12.w),
                           decoration: BoxDecoration(
-                            color: whiteColor,
+                            color: white,
                             borderRadius: BorderRadius.circular(24.r),
                             border: Border.all(color: mainGreen, width: 1.5),
                             boxShadow: [
@@ -296,42 +296,50 @@ class _BookingItem extends StatelessWidget {
   Future<void> _launchMeetingUrl(BuildContext context) async {
     print('Attempting to launch Zoom URL: $onlineMeetingUrl');
 
-    if (onlineMeetingUrl.isEmpty || !onlineMeetingUrl.startsWith('https://')) {
-      print('Invalid Zoom URL: $onlineMeetingUrl');
+    if (onlineMeetingUrl.isEmpty) {
+      print('Zoom URL is empty');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('رابط Zoom غير متوفر')),
+      );
+      return;
+    }
+
+    String formattedUrl = onlineMeetingUrl;
+    if (!formattedUrl.startsWith('https://')) {
+      formattedUrl = 'https://' + formattedUrl;
+      print('Formatted URL with https: $formattedUrl');
+    }
+
+    final Uri? uri = Uri.tryParse(formattedUrl);
+    if (uri == null) {
+      print('Invalid URL format: $formattedUrl');
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('رابط Zoom غير صالح')),
       );
       return;
     }
 
-    final Uri url = Uri.parse(onlineMeetingUrl);
-
     try {
-      if (await canLaunchUrl(url)) {
-        bool launched = await launchUrl(
-          url,
-          mode: LaunchMode.externalApplication,
-        );
-        print('Launch in external application: $launched');
+      // محاولة فتح في التطبيق الخارجي
+      bool launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+      print('Launched in external application: $launched');
 
-        if (!launched) {
-          launched = await launchUrl(
-            url,
-            mode: LaunchMode.platformDefault,
-          );
-          print('Launch in platform default: $launched');
-        }
+      if (!launched) {
+        // محاولة فتح في المتصفح
+        launched = await launchUrl(uri, mode: LaunchMode.platformDefault);
+        print('Launched in platform default (browser): $launched');
+      }
 
-        if (!launched) {
-          print('Failed to launch URL in both modes: $onlineMeetingUrl');
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('فشل فتح رابط Zoom')),
-          );
-        }
-      } else {
-        print('Cannot launch URL: $onlineMeetingUrl');
+      if (!launched) {
+        // محاولة فتح في متصفح خارجي
+        launched = await launchUrl(uri, mode: LaunchMode.externalNonBrowserApplication);
+        print('Launched in external non-browser application: $launched');
+      }
+
+      if (!launched) {
+        print('Failed to launch URL in all modes: $formattedUrl');
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('لا يمكن فتح رابط الاجتماع')),
+          const SnackBar(content: Text('فشل فتح رابط Zoom في جميع الأوضاع')),
         );
       }
     } catch (e) {
