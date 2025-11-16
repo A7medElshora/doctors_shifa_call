@@ -4,9 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
-import 'package:url_launcher/url_launcher.dart';
+// import 'package:url_launcher/url_launcher.dart';
 import 'package:doctors_shifa_call/core/utils/widgets/custom_app_bar_widget.dart';
 import 'package:doctors_shifa_call/features/home/data/models/booking/booking.dart';
+import 'package:doctors_shifa_call/features/video_call/export.dart';
+import 'package:doctors_shifa_call/core/navigation/app_router.dart';
 import 'package:doctors_shifa_call/features/home/presentation/cubits/booking/online_bookings_cubit.dart';
 import 'package:doctors_shifa_call/features/home/presentation/cubits/booking/online_bookings_state.dart';
 import 'package:doctors_shifa_call/features/home/presentation/cubits/booking/termination_status_cubit.dart';
@@ -293,61 +295,27 @@ class _BookingItem extends StatelessWidget {
     required this.onStatusUpdate,
   });
 
-  Future<void> _launchMeetingUrl(BuildContext context) async {
-    print('Attempting to launch Zoom URL: $onlineMeetingUrl');
+    void _navigateToVideoCall(BuildContext context) {
+    // The user wants the room name to be auto-populated from the API.
+    // The booking object contains the patientName which can be used as the channelName.
+    // We will use a combination of patientName and reservationId to ensure uniqueness.
+    final channelName = '${booking.patientName}_${booking.reservationId}';
+    final userId = booking.reservationId.toString(); // Using reservationId as a unique user ID
 
-    if (onlineMeetingUrl.isEmpty) {
-      print('Zoom URL is empty');
+    if (booking.onlineMeetingUrl == null || booking.onlineMeetingUrl!.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('رابط Zoom غير متوفر')),
+        const SnackBar(content: Text('لا يمكن بدء المكالمة، بيانات الاجتماع غير متوفرة')),
       );
       return;
     }
 
-    String formattedUrl = onlineMeetingUrl;
-    if (!formattedUrl.startsWith('https://')) {
-      formattedUrl = 'https://' + formattedUrl;
-      print('Formatted URL with https: $formattedUrl');
-    }
-
-    final Uri? uri = Uri.tryParse(formattedUrl);
-    if (uri == null) {
-      print('Invalid URL format: $formattedUrl');
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('رابط Zoom غير صالح')),
-      );
-      return;
-    }
-
-    try {
-      // محاولة فتح في التطبيق الخارجي
-      bool launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
-      print('Launched in external application: $launched');
-
-      if (!launched) {
-        // محاولة فتح في المتصفح
-        launched = await launchUrl(uri, mode: LaunchMode.platformDefault);
-        print('Launched in platform default (browser): $launched');
-      }
-
-      if (!launched) {
-        // محاولة فتح في متصفح خارجي
-        launched = await launchUrl(uri, mode: LaunchMode.externalNonBrowserApplication);
-        print('Launched in external non-browser application: $launched');
-      }
-
-      if (!launched) {
-        print('Failed to launch URL in all modes: $formattedUrl');
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('فشل فتح رابط Zoom في جميع الأوضاع')),
-        );
-      }
-    } catch (e) {
-      print('Error launching URL: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('خطأ أثناء فتح رابط Zoom: $e')),
-      );
-    }
+    // Navigate to the VideoCallScreen
+    context.push(
+      VideoCallScreen(
+        channelName: channelName,
+        userId: userId,
+      ),
+    );
   }
 
   void _showStatusDialog(BuildContext context) {
@@ -568,7 +536,7 @@ class _BookingItem extends StatelessWidget {
                   ),
                   SizedBox(width: 12.w),
                   GestureDetector(
-                    onTap: () => _launchMeetingUrl(context),
+                    onTap: () => _navigateToVideoCall(context),
                     child: Container(
                       width: 60.w,
                       height: 60.h,
