@@ -50,19 +50,19 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyBYm7atk5QMnKPDUJ86l_HFkiUse0upy9k',
-    appId: '1:405478207570:android:c8758d7cac1b8453c2af8b',
-    messagingSenderId: '405478207570',
-    projectId: 'doctors_shifa_call-f2ce2',
-    storageBucket: 'doctors_shifa_call-f2ce2.appspot.com',
+    apiKey: 'AIzaSyBcQ2YQaSfXW0iAGHCrGJf_WFA5ddrkojY',
+    appId: '1:1095983936178:android:1772f6d453d2453f794fab',
+    messagingSenderId: '1095983936178',
+    projectId: 'shifacalldoctors',
+    storageBucket: 'shifacalldoctors.firebasestorage.app',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyCvl7nfC63m2grQ6-vyjVvk9MlhOIfglT8',
-    appId: '1:405478207570:ios:e7bb9f1a6d9cae29c2af8b',
-    messagingSenderId: '405478207570',
-    projectId: 'doctors_shifa_call-f2ce2',
-    storageBucket: 'doctors_shifa_call-f2ce2.appspot.com',
-    iosBundleId: 'com.touriest.doctors_shifa_call',
+    apiKey: 'AIzaSyBKeAgd8szF45vKQ6I1XUuCvwt8QfGCIVs',
+    appId: '1:1095983936178:ios:6ddf26e16f2a974b794fab',
+    messagingSenderId: '1095983936178',
+    projectId: 'shifacalldoctors',
+    storageBucket: 'shifacalldoctors.firebasestorage.app',
+    iosBundleId: 'com.shifacall.shifacalldoctor',
   );
 }

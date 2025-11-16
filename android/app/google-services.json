@@ -1,21 +1,21 @@
 {
   "project_info": {
-    "project_number": "405478207570",
-    "project_id": "doctors_shifa_call-f2ce2",
-    "storage_bucket": "doctors_shifa_call-f2ce2.appspot.com"
+    "project_number": "1095983936178",
+    "project_id": "shifacalldoctors",
+    "storage_bucket": "shifacalldoctors.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:405478207570:android:c8758d7cac1b8453c2af8b",
+        "mobilesdk_app_id": "1:1095983936178:android:1772f6d453d2453f794fab",
         "android_client_info": {
-          "package_name": "com.touriest.doctors_shifa_call"
+          "package_name": "com.tabibsoft.doctors_shifa_call"
         }
       },
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyBYm7atk5QMnKPDUJ86l_HFkiUse0upy9k"
+          "current_key": "AIzaSyBcQ2YQaSfXW0iAGHCrGJf_WFA5ddrkojY"
         }
       ],
       "services": {
