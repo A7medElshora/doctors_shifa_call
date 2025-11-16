@@ -4,10 +4,8 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 
 class AgoraService {
-  // The user provided a separate backend server for token generation.
-  // The base URL for the token server.
-  // NOTE: This IP is from the reference project. The user should replace it with their actual server IP.
-  final String _baseUrl = 'http://138.199.239.20:5000'; 
+  final String _baseUrl =
+      'http://192.168.1.200:5000'; // Assuming the server is running on this IP and port 5000
 
   Future<Map<String, dynamic>> getToken(String channelName, String uid) async {
     final url = Uri.parse('$_baseUrl/token?channel=$channelName&uid=$uid');

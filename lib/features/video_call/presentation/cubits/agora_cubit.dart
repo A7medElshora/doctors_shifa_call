@@ -1,8 +1,8 @@
 import 'package:agora_rtc_engine/agora_rtc_engine.dart';
+import 'package:doctors_shifa_call/core/services/agora_service.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:doctors_shifa_call/core/services/agora_service.dart';
 
 // State
 class AgoraState {
@@ -52,9 +52,7 @@ class AgoraState {
 // Cubit
 class AgoraCubit extends Cubit<AgoraState> {
   // NOTE: Replace with your actual Agora App ID
-  // The App ID is hardcoded in the reference project, I will keep it for now, 
-  // but it should ideally be loaded from a secure source like environment variables or remote config.
-  static const String appId = 'b06bf3d27812421e864cf85d527f8d89'; 
+  static const String appId = '5aec2ab98801443988fedf8149eee82c'; 
   final AgoraService _agoraService = AgoraService();
 
   AgoraCubit() : super(AgoraState());
@@ -66,7 +64,13 @@ class AgoraCubit extends Cubit<AgoraState> {
   Future<void> connect(String userId, String channelName) async {
     if (state.isConnected) return;
 
-    _updateStatus('Connecting to channel "$channelName" as $userId...');
+    // تحقق من المدخلات
+    if (channelName.isEmpty || userId.isEmpty) {
+      _updateStatus('خطأ: اسم القناة أو UID فارغ.');
+      return;
+    }
+
+    _updateStatus('جاري الاتصال بالقناة "$channelName" كـ $userId...');
 
     // 1. Request Permissions
     try {
@@ -76,37 +80,50 @@ class AgoraCubit extends Cubit<AgoraState> {
       if (cameraStatus != PermissionStatus.granted ||
           micStatus != PermissionStatus.granted) {
         _updateStatus(
-            'Permissions denied. Please grant camera and microphone access.');
+            'تم رفض الإذن. يرجى منح صلاحيات الكاميرا والميكروفون.');
         return;
       }
     } catch (e) {
-      _updateStatus('Error requesting permissions: $e');
+      _updateStatus('خطأ في طلب الإذن: $e');
       return;
     }
 
     // 2. Initialize Engine
     try {
       final engine = await _agoraService.initializeEngine(appId);
+      
+      // إضافة: تمكين الفيديو والصوت صراحة لتجنب الشاشة البيضاء
+      await engine.enableVideo();
+      await engine.enableAudio();
+      
       emit(state.copyWith(engine: engine, channelId: channelName));
       _setupEngineCallbacks(engine);
     } catch (e) {
-      _updateStatus('Error initializing Agora engine: $e');
+      _updateStatus('خطأ في تهيئة محرك Agora: $e');
       return;
     }
 
     // 3. Get Token and Join Channel
     try {
-      _updateStatus('Fetching token...');
-      // The user wants the room name to be auto-populated from the API.
-      // The channelName is passed from the booking card, which will be derived from the API data.
+      _updateStatus('جاري جلب التوكن...');
       final tokenData = await _agoraService.getToken(channelName, userId);
-      final token = tokenData['token'];
       
-      _updateStatus('Joining channel...');
+      // تحقق من الاستجابة
+      if (tokenData.isEmpty || !tokenData.containsKey('token')) {
+        throw Exception('استجابة التوكن غير صالحة: ${tokenData.toString()}');
+      }
+      
+      final token = tokenData['token'] as String;
+      
+      _updateStatus('جاري الانضمام للقناة...');
+      
+      // تعديل: استخدم userId كـ UID (حوله إلى int إن أمكن)
+      final uid = int.tryParse(userId) ?? 0;
+      
       await state.engine!.joinChannel(
         token: token,
         channelId: channelName,
-        uid: 0, // Use 0 for auto-assigned UID
+        uid: uid,  // UID = userId (مثل 0 إذا لم يكن رقمياً)
         options: const ChannelMediaOptions(
           clientRoleType: ClientRoleType.clientRoleBroadcaster,
           channelProfile: ChannelProfileType.channelProfileCommunication,
@@ -114,7 +131,8 @@ class AgoraCubit extends Cubit<AgoraState> {
       );
       emit(state.copyWith(isConnected: true));
     } catch (e) {
-      _updateStatus('Error joining channel: $e');
+      debugPrint('فشل في جلب التوكن أو الانضمام: $e');
+      _updateStatus('خطأ في الانضمام للقناة: $e');
       await disconnect();
     }
   }
@@ -123,27 +141,29 @@ class AgoraCubit extends Cubit<AgoraState> {
     engine.registerEventHandler(
       RtcEngineEventHandler(
         onJoinChannelSuccess: (connection, elapsed) {
-          debugPrint("local user ${connection.localUid} joined");
-          emit(state.copyWith(isJoined: true, statusMessage: 'Joined channel successfully.'));
+          debugPrint("المستخدم المحلي ${connection.localUid} انضم");
+          emit(state.copyWith(isJoined: true, statusMessage: 'تم الانضمام للقناة بنجاح.'));
         },
         onUserJoined: (connection, remoteUid, elapsed) {
-          debugPrint("remote user $remoteUid joined");
+          debugPrint("المستخدم البعيد $remoteUid انضم");
           emit(state.copyWith(remoteUid: remoteUid));
         },
-        onUserOffline: (connection, remoteUid, reason) {
-          debugPrint("remote user $remoteUid left");
+        onUserOffline: (connection, remoteUid, reason) async {
+          debugPrint("المستخدم البعيد $remoteUid غادر");
           if (state.remoteUid == remoteUid) {
             emit(state.copyWith(remoteUid: null));
+            _updateStatus('غادر المستخدم $remoteUid القناة. إنهاء المكالمة...');
+            // إضافة: إنهاء المكالمة تلقائياً عند غادر الطرف الآخر
+            await disconnect();
           }
-          _updateStatus('User $remoteUid left the channel.');
         },
         onLeaveChannel: (connection, stats) {
-          debugPrint("local user ${connection.localUid} left");
+          debugPrint("غادر المستخدم المحلي ${connection.localUid}");
           emit(state.copyWith(isJoined: false, remoteUid: null));
         },
         onError: (err, msg) {
-          debugPrint('Agora Error: $err, $msg');
-          _updateStatus('Agora Error: $msg');
+          debugPrint('خطأ Agora: $err, $msg');
+          _updateStatus('خطأ Agora: $msg');
         },
       ),
     );
@@ -153,7 +173,7 @@ class AgoraCubit extends Cubit<AgoraState> {
     if (state.engine != null) {
       await state.engine!.leaveChannel();
       await state.engine!.release();
-      emit(AgoraState(statusMessage: 'Disconnected.'));
+      emit(AgoraState(statusMessage: 'تم الإفصاح عن الاتصال.'));
     }
   }
 
@@ -161,7 +181,11 @@ class AgoraCubit extends Cubit<AgoraState> {
     if (state.engine != null) {
       final newMuteState = !state.localAudioEnabled;
       state.engine!.muteLocalAudioStream(newMuteState);
+      state.engine!.enableLocalAudio(!newMuteState);  // إصلاح: تعطيل الصوت الكامل للكتم
+      state.engine!.muteAllRemoteAudioStreams(newMuteState);  // كتم الاستقبال أيضاً إذا لزم
+      // إصلاح: emit الـ newMuteState الصحيح
       emit(state.copyWith(localAudioEnabled: !newMuteState));
+      _updateStatus(newMuteState ? 'تم كتم الصوت' : 'تم تشغيل الصوت');
     }
   }
 
@@ -169,13 +193,16 @@ class AgoraCubit extends Cubit<AgoraState> {
     if (state.engine != null) {
       final newCameraState = !state.localVideoEnabled;
       state.engine!.enableLocalVideo(newCameraState);
+      // إصلاح: emit الـ newCameraState الصحيح
       emit(state.copyWith(localVideoEnabled: newCameraState));
+      _updateStatus(newCameraState ? 'تم تشغيل الكاميرا' : 'تم إغلاق الكاميرا');
     }
   }
 
   void switchCamera() {
     if (state.engine != null) {
       state.engine!.switchCamera();
+      _updateStatus('تم تبديل الكاميرا');
     }
   }
 

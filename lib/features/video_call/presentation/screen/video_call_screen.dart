@@ -1,11 +1,11 @@
+import 'dart:ui';
 import 'package:agora_rtc_engine/agora_rtc_engine.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:doctors_shifa_call/core/helpers/extensions.dart'; // Assuming this extension exists
+import 'package:doctors_shifa_call/core/helpers/extensions.dart';
 import 'package:doctors_shifa_call/features/video_call/presentation/cubits/agora_cubit.dart';
-// Assuming the target project uses easy_localization and has these keys
-import 'package:doctors_shifa_call/generated/locale_keys.g.dart'; 
+import 'package:doctors_shifa_call/generated/locale_keys.g.dart';
 import 'package:easy_localization/easy_localization.dart';
 
 class VideoCallScreen extends StatelessWidget {
@@ -21,7 +21,7 @@ class VideoCallScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => AgoraCubit()..connect(userId, channelName),
+      create: (_) => AgoraCubit()..connect(userId, channelName),
       child: const _VideoCallView(),
     );
   }
@@ -35,8 +35,7 @@ class _VideoCallView extends StatelessWidget {
     return BlocConsumer<AgoraCubit, AgoraState>(
       listener: (context, state) {
         if (state.statusMessage != null) {
-          // You can show a toast or snackbar here for status messages
-          debugPrint('Agora Status: ${state.statusMessage}');
+          debugPrint('Agora: ${state.statusMessage}');
         }
       },
       builder: (context, state) {
@@ -44,14 +43,17 @@ class _VideoCallView extends StatelessWidget {
 
         if (state.engine == null || !state.isConnected) {
           return Scaffold(
-            appBar: AppBar(title: Text(LocaleKeys.video_call.tr())),
+            backgroundColor: Colors.black,
             body: Center(
               child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  const CircularProgressIndicator(),
+                  const CircularProgressIndicator(color: Colors.white),
                   SizedBox(height: 20.h),
-                  Text(state.statusMessage ?? LocaleKeys.connecting.tr()),
+                  Text(
+                    "Connecting...",
+                    style: TextStyle(color: Colors.white, fontSize: 18.sp),
+                  ),
                 ],
               ),
             ),
@@ -61,104 +63,158 @@ class _VideoCallView extends StatelessWidget {
         return Scaffold(
           body: Stack(
             children: [
-              // 1. Remote Video (Full Screen)
-              if (state.remoteUid != null && state.remoteUid! > 0)
-                Positioned.fill(
-                  child: AgoraVideoView(
-                    controller: VideoViewController.remote(
-                      rtcEngine: state.engine!,
-                      canvas: VideoCanvas(uid: state.remoteUid!),
-                      connection: RtcConnection(channelId: state.channelId!),
+              // Fullscreen Remote Video
+              Positioned.fill(
+                child: state.remoteUid != null
+                    ? AgoraVideoView(
+                        controller: VideoViewController.remote(
+                          rtcEngine: state.engine!,
+                          canvas: VideoCanvas(uid: state.remoteUid!),
+                          connection:
+                              RtcConnection(channelId: state.channelId!),
+                        ),
+                      )
+                    : Center(
+                        child: Text(
+                          "Waiting for patient to join...",
+                          style: TextStyle(
+                            fontSize: 22.sp,
+                            color: Colors.white.withOpacity(0.8),
+                          ),
+                        ),
+                      ),
+              ),
+
+              // Dark Transparent Overlay
+              Container(
+                color: Colors.black.withOpacity(0.25),
+              ),
+
+              // Local video container (Glass Style)
+              Positioned(
+                top: 50.h,
+                left: 15.w,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(16.r),
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+                    child: Container(
+                      width: 120.w,
+                      height: 170.h,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.12),
+                        borderRadius: BorderRadius.circular(16.r),
+                        border: Border.all(
+                          color: Colors.white.withOpacity(0.4),
+                          width: 1.5,
+                        ),
+                      ),
+                      child: state.localVideoEnabled
+                          ? AgoraVideoView(
+                              controller: VideoViewController(
+                                rtcEngine: state.engine!,
+                                canvas: const VideoCanvas(uid: 0),
+                              ),
+                            )
+                          : Center(
+                              child: Icon(
+                                Icons.videocam_off,
+                                color: Colors.white,
+                                size: 32.sp,
+                              ),
+                            ),
                     ),
                   ),
-                )
-              else
-                Center(
-                  child: Text(
-                    LocaleKeys.waiting_for_other_user.tr(),
-                    style: const TextStyle(color: Colors.white, fontSize: 20),
-                  ),
-                ),
-
-              // 2. Local Video (Small Overlay)
-              Align(
-                alignment: Alignment.topLeft,
-                child: Container(
-                  width: 100.w,
-                  height: 150.h,
-                  margin: EdgeInsets.fromLTRB(10.w, 40.h, 10.w, 10.h),
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Colors.white, width: 2),
-                    borderRadius: BorderRadius.circular(10.r),
-                  ),
-                  child: state.localVideoEnabled
-                      ? AgoraVideoView(
-                          controller: VideoViewController(
-                            rtcEngine: state.engine!,
-                            canvas: const VideoCanvas(uid: 0),
-                          ),
-                        )
-                      : const Center(
-                          child: Icon(Icons.videocam_off, color: Colors.white),
-                        ),
                 ),
               ),
 
-              // 3. Control Buttons
-              Align(
-                alignment: Alignment.bottomCenter,
-                child: Padding(
-                  padding: EdgeInsets.only(bottom: 30.h),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      // Mute/Unmute
-                      FloatingActionButton(
-                        heroTag: 'mute',
-                        onPressed: cubit.toggleMute,
-                        backgroundColor: state.localAudioEnabled ? Colors.white : Colors.red,
-                        child: Icon(
+              // Bottom Controls
+              Positioned(
+                bottom: 40.h,
+                left: 0,
+                right: 0,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    _roundButton(
+                      active: state.localAudioEnabled,
+                      activeColor: Colors.white,
+                      icon:
                           state.localAudioEnabled ? Icons.mic : Icons.mic_off,
-                          color: state.localAudioEnabled ? Colors.blue : Colors.white,
-                        ),
-                      ),
-                      // End Call
-                      FloatingActionButton(
-                        heroTag: 'end',
-                        onPressed: () {
-                          cubit.disconnect();
-                          // Assuming the target project uses a navigation extension like 'pop'
-                          // If not, it should be Navigator.of(context).pop();
-                          context.pop(); 
-                        },
-                        backgroundColor: Colors.red,
-                        child: const Icon(Icons.call_end, color: Colors.white),
-                      ),
-                      // Toggle Camera
-                      FloatingActionButton(
-                        heroTag: 'camera',
-                        onPressed: cubit.toggleCamera,
-                        backgroundColor: state.localVideoEnabled ? Colors.white : Colors.red,
-                        child: Icon(
-                          state.localVideoEnabled ? Icons.videocam : Icons.videocam_off,
-                          color: state.localVideoEnabled ? Colors.blue : Colors.white,
-                        ),
-                      ),
-                      // Switch Camera
-                      FloatingActionButton(
-                        heroTag: 'switch',
-                        onPressed: cubit.switchCamera,
-                        backgroundColor: Colors.white,
-                        child: const Icon(Icons.switch_camera, color: Colors.blue),
-                      ),
-                    ],
-                  ),
+                      onPressed: cubit.toggleMute,
+                      activeIconColor: Colors.blue,
+                      inactiveIconColor: Colors.white,
+                    ),
+                    _roundButton(
+                      isEndButton: true,
+                      icon: Icons.call_end,
+                      onPressed: () {
+                        cubit.disconnect();
+                        context.pop();
+                      },
+                    ),
+                    _roundButton(
+                      active: state.localVideoEnabled,
+                      activeColor: Colors.white,
+                      icon: state.localVideoEnabled
+                          ? Icons.videocam
+                          : Icons.videocam_off,
+                      onPressed: cubit.toggleCamera,
+                      activeIconColor: Colors.blue,
+                      inactiveIconColor: Colors.white,
+                    ),
+                    _roundButton(
+                      icon: Icons.switch_camera,
+                      onPressed: cubit.switchCamera,
+                      activeColor: Colors.white,
+                      activeIconColor: Colors.blue,
+                    ),
+                  ],
                 ),
               ),
             ],
           ),
         );
       },
+    );
+  }
+
+  /// --- Reusable Button Widget (Modern UI) ---
+  Widget _roundButton({
+    required IconData icon,
+    required VoidCallback onPressed,
+    bool active = true,
+    bool isEndButton = false,
+    Color activeColor = Colors.white,
+    Color activeIconColor = Colors.blue,
+    Color inactiveIconColor = Colors.white,
+  }) {
+    return Container(
+      width: 65.w,
+      height: 65.w,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: isEndButton
+            ? Colors.red
+            : (active ? activeColor : Colors.red),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.35),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: IconButton(
+        iconSize: 30.sp,
+        onPressed: onPressed,
+        icon: Icon(
+          icon,
+          color: isEndButton
+              ? Colors.white
+              : (active ? activeIconColor : inactiveIconColor),
+        ),
+      ),
     );
   }
 }

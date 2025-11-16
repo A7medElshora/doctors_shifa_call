@@ -295,25 +295,30 @@ class _BookingItem extends StatelessWidget {
     required this.onStatusUpdate,
   });
 
-    void _navigateToVideoCall(BuildContext context) {
+  void _navigateToVideoCall(BuildContext context) {
     // The user wants the room name to be auto-populated from the API.
     // The booking object contains the patientName which can be used as the channelName.
     // We will use a combination of patientName and reservationId to ensure uniqueness.
-    final channelName = '${booking.patientName}_${booking.reservationId}';
-    final userId = booking.reservationId.toString(); // Using reservationId as a unique user ID
+    final channelName = '${booking.reservationId}';
+    final userId = booking.reservationId
+        .toString(); // Using reservationId as a unique user ID
 
-    if (booking.onlineMeetingUrl == null || booking.onlineMeetingUrl!.isEmpty) {
+    if (booking.onlineMeetingUrl.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('لا يمكن بدء المكالمة، بيانات الاجتماع غير متوفرة')),
+        const SnackBar(
+            content: Text('لا يمكن بدء المكالمة، بيانات الاجتماع غير متوفرة')),
       );
       return;
     }
 
     // Navigate to the VideoCallScreen
-    context.push(
-      VideoCallScreen(
-        channelName: channelName,
-        userId: userId,
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => VideoCallScreen(
+          channelName: channelName,
+          userId: userId,
+        ),
       ),
     );
   }
