@@ -4,7 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:permission_handler/permission_handler.dart';
 
-// State
+// State (بدون تغيير)
 class AgoraState {
   final RtcEngine? engine;
   final bool isConnected;
@@ -117,8 +117,11 @@ class AgoraCubit extends Cubit<AgoraState> {
       
       _updateStatus('جاري الانضمام للقناة...');
       
-      // تعديل: استخدم userId كـ UID (حوله إلى int إن أمكن)
+      // تعديل: استخدم userId كـ UID (حوله إلى int إن أمكن)، وأضف تحذيراً إذا كان 0
       final uid = int.tryParse(userId) ?? 0;
+      if (uid == 0) {
+        debugPrint('تحذير: UID غير رقمي، سيتم استخدام UID تلقائي (0)');
+      }
       
       await state.engine!.joinChannel(
         token: token,
@@ -129,6 +132,14 @@ class AgoraCubit extends Cubit<AgoraState> {
           channelProfile: ChannelProfileType.channelProfileCommunication,
         ),
       );
+      
+      // إضافة جديدة: تمكين مراقبة حجم الصوت للتحقق من الكتم (مع البارامترات المطلوبة)
+      await state.engine!.enableAudioVolumeIndication(
+        interval: 200,  // كل 200ms
+        smooth: 3,      // عامل التنعيم (1-10)
+        reportVad: true // تمكين كشف نشاط الصوت
+      );
+      
       emit(state.copyWith(isConnected: true));
     } catch (e) {
       debugPrint('فشل في جلب التوكن أو الانضمام: $e');
@@ -153,7 +164,8 @@ class AgoraCubit extends Cubit<AgoraState> {
           if (state.remoteUid == remoteUid) {
             emit(state.copyWith(remoteUid: null));
             _updateStatus('غادر المستخدم $remoteUid القناة. إنهاء المكالمة...');
-            // إضافة: إنهاء المكالمة تلقائياً عند غادر الطرف الآخر
+            // تعديل: أضف تأخيراً قصيراً (2 ثوانٍ) قبل الإنهاء لتجنب المفاجآت
+            await Future.delayed(const Duration(seconds: 2));
             await disconnect();
           }
         },
@@ -164,6 +176,18 @@ class AgoraCubit extends Cubit<AgoraState> {
         onError: (err, msg) {
           debugPrint('خطأ Agora: $err, $msg');
           _updateStatus('خطأ Agora: $msg');
+        },
+        // إضافة جديدة: مراقبة حجم الصوت للتحقق من الكتم (مع البارامترات الكاملة)
+        onAudioVolumeIndication: (RtcConnection connection, List<AudioVolumeInfo> speakers, int speakerNumber, int totalVolume) {
+          debugPrint('حجم الصوت: $totalVolume (عدد المتحدثين: $speakerNumber)');  // لو 0 بعد الكتم، معناها نجح
+          // إذا كان هناك متحدث محلي، يمكن طباعة تفاصيل إضافية
+          if (speakers.isNotEmpty) {
+            final localSpeaker = speakers.firstWhere(
+              (info) => info.uid == connection.localUid,
+              orElse: () => speakers[0],
+            );
+            debugPrint('حجم الصوت المحلي: ${localSpeaker.volume}');
+          }
         },
       ),
     );
@@ -177,32 +201,55 @@ class AgoraCubit extends Cubit<AgoraState> {
     }
   }
 
+  // تعديل كامل: إصلاح المنطق للكتم المحلي فقط، مع توافق مع الواجهة
   void toggleMute() {
-    if (state.engine != null) {
-      final newMuteState = !state.localAudioEnabled;
-      state.engine!.muteLocalAudioStream(newMuteState);
-      state.engine!.enableLocalAudio(!newMuteState);  // إصلاح: تعطيل الصوت الكامل للكتم
-      state.engine!.muteAllRemoteAudioStreams(newMuteState);  // كتم الاستقبال أيضاً إذا لزم
-      // إصلاح: emit الـ newMuteState الصحيح
-      emit(state.copyWith(localAudioEnabled: !newMuteState));
-      _updateStatus(newMuteState ? 'تم كتم الصوت' : 'تم تشغيل الصوت');
+    if (state.engine == null) {
+      _updateStatus('المحرك غير متاح.');
+      return;
+    }
+    try {
+      // قلب الحالة: localAudioEnabled = true (مفعل) → false (مُكْتَم)
+      final newAudioEnabled = !state.localAudioEnabled;
+      // تطبيق على المحلي فقط (لا تكتم البعيد)
+      state.engine!.enableLocalAudio(newAudioEnabled);  // مفعل/معطل التقاط الصوت
+      state.engine!.muteLocalAudioStream(!newAudioEnabled);  // كتم الإرسال إذا مُكْتَم
+      // إصدار الحدث الجديد
+      emit(state.copyWith(localAudioEnabled: newAudioEnabled));
+      _updateStatus(newAudioEnabled ? 'تم تشغيل الصوت' : 'تم كتم الصوت');
+    } catch (e) {
+      debugPrint('خطأ في تبديل الصوت: $e');
+      _updateStatus('خطأ في تبديل الصوت: $e');
     }
   }
 
+  // تعديل: أضف try-catch للأمان
   void toggleCamera() {
-    if (state.engine != null) {
+    if (state.engine == null) {
+      _updateStatus('المحرك غير متاح.');
+      return;
+    }
+    try {
       final newCameraState = !state.localVideoEnabled;
       state.engine!.enableLocalVideo(newCameraState);
-      // إصلاح: emit الـ newCameraState الصحيح
       emit(state.copyWith(localVideoEnabled: newCameraState));
       _updateStatus(newCameraState ? 'تم تشغيل الكاميرا' : 'تم إغلاق الكاميرا');
+    } catch (e) {
+      debugPrint('خطأ في تبديل الكاميرا: $e');
+      _updateStatus('خطأ في تبديل الكاميرا: $e');
     }
   }
 
   void switchCamera() {
-    if (state.engine != null) {
+    if (state.engine == null) {
+      _updateStatus('المحرك غير متاح.');
+      return;
+    }
+    try {
       state.engine!.switchCamera();
       _updateStatus('تم تبديل الكاميرا');
+    } catch (e) {
+      debugPrint('خطأ في تبديل الكاميرا: $e');
+      _updateStatus('خطأ في تبديل الكاميرا: $e');
     }
   }
 

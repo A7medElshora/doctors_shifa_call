@@ -5,8 +5,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:doctors_shifa_call/core/helpers/extensions.dart';
 import 'package:doctors_shifa_call/features/video_call/presentation/cubits/agora_cubit.dart';
-import 'package:doctors_shifa_call/generated/locale_keys.g.dart';
-import 'package:easy_localization/easy_localization.dart';
 
 class VideoCallScreen extends StatelessWidget {
   final String channelName;
@@ -139,9 +137,10 @@ class _VideoCallView extends StatelessWidget {
                     _roundButton(
                       active: state.localAudioEnabled,
                       activeColor: Colors.white,
-                      icon:
-                          state.localAudioEnabled ? Icons.mic : Icons.mic_off,
-                      onPressed: cubit.toggleMute,
+                      icon: state.localAudioEnabled ? Icons.mic_off : Icons.mic,  // mic_off عند المفعل (للكتم)، mic عند المُكْتَم (للاستئناف)
+                      onPressed: () {
+                        cubit.toggleMute();  // تنفيذ التبديل بين mute/unmute
+                      },
                       activeIconColor: Colors.blue,
                       inactiveIconColor: Colors.white,
                     ),
@@ -196,7 +195,7 @@ class _VideoCallView extends StatelessWidget {
         shape: BoxShape.circle,
         color: isEndButton
             ? Colors.red
-            : (active ? activeColor : Colors.red),
+            : (active ? activeColor : Colors.red),  // أحمر عند الكتم للتحذير
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.35),
