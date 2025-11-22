@@ -6,13 +6,11 @@ buildscript {
     }
 
     dependencies {
-        // Android Gradle Plugin declared here (used by old templates)
         classpath 'com.android.tools.build:gradle:8.3.0'
-        // START: FlutterFire Configuration
-        classpath 'com.google.gms:google-services:4.3.15'
-        classpath 'com.google.firebase:firebase-crashlytics-gradle:2.8.1'
-        // END: FlutterFire Configuration
-        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.9.22"
+        // FlutterFire
+        classpath 'com.google.gms:google-services:4.4.2'        // تحديث لآخر إصدار
+        classpath 'com.google.firebase:firebase-crashlytics-gradle:3.0.2' // تحديث
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
     }
 }
 
@@ -23,15 +21,14 @@ allprojects {
     }
 }
 
-rootProject.buildDir = "../build"
+rootProject.buildDir = '../build'
 subprojects {
     project.buildDir = "${rootProject.buildDir}/${project.name}"
 }
 subprojects {
-    project.evaluationDependsOn(":app")
+    project.evaluationDependsOn(':app')
 }
 
 tasks.register("clean", Delete) {
     delete rootProject.buildDir
 }
-

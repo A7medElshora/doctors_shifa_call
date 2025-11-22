@@ -80,3 +80,102 @@ dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
     implementation "com.google.firebase:firebase-crashlytics-ktx"
 }
+
+
+//For small apk 
+// plugins {
+//     id "com.android.application"
+//     id 'com.google.gms.google-services'
+//     id 'com.google.firebase.crashlytics'
+//     id "kotlin-android"
+//     id "dev.flutter.flutter-gradle-plugin"
+// }
+
+// def keystoreProperties = new Properties()
+// def keystorePropertiesFile = rootProject.file('key.properties')
+// if (keystorePropertiesFile.exists()) {
+//     keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+// }
+
+// android {
+//     namespace "com.tabibsoft.doctors_shifa_call"
+//     compileSdk 36
+//     ndkVersion flutter.ndkVersion
+
+//     compileOptions {
+//         sourceCompatibility JavaVersion.VERSION_1_8
+//         targetCompatibility JavaVersion.VERSION_1_8
+//         coreLibraryDesugaringEnabled true
+//     }
+
+//     kotlinOptions {
+//         jvmTarget = '1.8'
+//     }
+
+//     defaultConfig {
+//         applicationId "com.tabibsoft.doctors_shifa_call"
+//         minSdk 24
+//         targetSdk 36
+//         versionCode flutter.versionCode
+//         versionName flutter.versionName
+//     }
+
+//     flavorDimensions "default"
+//     productFlavors {
+//         production {
+//             dimension "default"
+//             applicationId "com.tabibsoft.doctors_shifa_call"
+//             resValue "string", "app_name", "Shifa Call Doctors"
+//         }
+//         development {
+//             dimension "default"
+//             applicationId "com.tabibsoft.doctors_shifa_call.dev"
+//             resValue "string", "app_name", "Shifa Call Dev"
+//         }
+//     }
+
+//     signingConfigs {
+//         release {
+//             if (keystorePropertiesFile.exists()) {
+//                 keyAlias keystoreProperties['keyAlias']
+//                 keyPassword keystoreProperties['keyPassword']
+//                 storeFile keystoreProperties['storeFile'] ? file(keystoreProperties['storeFile']) : null
+//                 storePassword keystoreProperties['storePassword']
+//             }
+//         }
+//     }
+
+//     buildTypes {
+//         release {
+//             signingConfig signingConfigs.release
+//             minifyEnabled true
+//             shrinkResources true
+//             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'),
+//                           'proguard-rules.pro'
+//         }
+//         debug {
+//             applicationIdSuffix ".debug"
+//             versionNameSuffix "-debug"
+//         }
+//     }
+
+//     // تقسيم الـ APK حسب المعمارية (هذا اللي هيخلي الحجم صغير جدًا)
+//     splits {
+//         abi {
+//             reset()
+//             enable true
+//             include "armeabi-v7a", "arm64-v8a"
+//             universalApk false
+//         }
+//     }
+// }
+
+// flutter {
+//     source '../..'
+// }
+
+// dependencies {
+//     coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.5'
+//     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
+//     implementation "com.google.firebase:firebase-crashlytics-ktx"
+// }

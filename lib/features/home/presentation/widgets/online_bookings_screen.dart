@@ -312,6 +312,31 @@ class _BookingItem extends StatelessWidget {
     required this.onStatusUpdate,
   });
 
+  DateTime _parseAppointmentTime(String dateStr, String timeStr) {
+    // Parse date
+    DateTime date = DateTime.parse(dateStr);
+    int year = date.year;
+    int month = date.month;
+    int day = date.day;
+    // Parse time (e.g., "16:45:60" -> handle seconds > 59 by setting to 0)
+    List<String> timeParts = timeStr.split(':');
+    int hours = int.parse(timeParts[0]);
+    int minutes = int.parse(timeParts[1]);
+    int seconds = timeParts.length > 2 ? int.parse(timeParts[2]) : 0;
+    if (seconds > 59) {
+      seconds = 0; // Adjust invalid seconds
+    }
+    // Create local DateTime
+    return DateTime(year, month, day, hours, minutes, seconds);
+  }
+
+  bool _isWithinCallWindow(DateTime appointmentTime) {
+    DateTime now = DateTime.now();
+    DateTime startWindow = appointmentTime.subtract(const Duration(minutes: 3));
+    DateTime endWindow = appointmentTime.add(const Duration(minutes: 5));
+    return now.isAfter(startWindow) && now.isBefore(endWindow);
+  }
+
   void _navigateToVideoCall(BuildContext context) {
     // The user wants the room name to be auto-populated from the API.
     // The booking object contains the patientName which can be used as the channelName.
@@ -324,6 +349,24 @@ class _BookingItem extends StatelessWidget {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
             content: Text('لا يمكن بدء المكالمة، بيانات الاجتماع غير متوفرة')),
+      );
+      return;
+    }
+
+    final appointmentTime = _parseAppointmentTime(booking.date, booking.time);
+    if (!_isWithinCallWindow(appointmentTime)) {
+      final formattedAppointment = '$dateStr الساعة $timeStr';
+      final startWindow = appointmentTime.subtract(const Duration(minutes: 3));
+      final endWindow = appointmentTime.add(const Duration(minutes: 5));
+      final startTimeStr = DateFormat('hh:mm a', 'ar').format(startWindow);
+      final endTimeStr = DateFormat('hh:mm a', 'ar').format(endWindow);
+      final message =
+          'الموعد هو $formattedAppointment ويمكنك الدخول من الساعة $startTimeStr إلى $endTimeStr';
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(message),
+          duration: const Duration(seconds: 5),
+        ),
       );
       return;
     }
