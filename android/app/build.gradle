@@ -44,7 +44,7 @@ android {
         production {
             dimension "default"
             applicationId "com.tabibsoft.doctors_shifa_call"
-            resValue "string", "app_name", "Shifa Call Doctors"
+            resValue "string", "app_name", "Doctors"
         }
         development {
             dimension "default"
