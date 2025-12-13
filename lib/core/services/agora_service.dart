@@ -5,7 +5,7 @@ import 'dart:convert';
 
 class AgoraService {
   final String _baseUrl =
-      'http://138.199.239.20:5000'; // Assuming the server is running on this IP and port 5000
+      'https://185.135.137.90:5000'; // Assuming the server is running on this IP and port 5000
 
   Future<Map<String, dynamic>> getToken(String channelName, String uid) async {
     final url = Uri.parse('$_baseUrl/token?channel=$channelName&uid=$uid');

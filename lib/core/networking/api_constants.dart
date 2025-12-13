@@ -1,5 +1,5 @@
 class ApiConstants {
-  static const String apiBaseUrl = 'https://138.199.239.20:44302/webapi/';
+  static const String apiBaseUrl = 'https://185.135.137.90:44302/webapi/';
   static const String loginEndpoint = 'doctor_login/login';
   static const String getDaysEndpoint = 'doctor_times/getdays';
   static const String getDoctorTimeTableEndpoint =
