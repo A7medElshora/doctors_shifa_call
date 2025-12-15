@@ -1,4 +1,4 @@
-package com.tabibsoft.doctors_shifa_call
+package com.tabibsoft.shifa_doctors
 
 import io.flutter.embedding.android.FlutterActivity
 
