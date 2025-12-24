@@ -41,7 +41,8 @@ class _LoginScreenState extends State<LoginScreen> {
       resizeToAvoidBottomInset: true,
       body: BlocConsumer<AuthCubit, AuthState>(
         listener: (context, state) {
-          if (state.status == AuthStatus.success && state.loginResponse != null) {
+          if (state.status == AuthStatus.success &&
+              state.loginResponse != null) {
             Navigator.of(context).pushReplacement(
               MaterialPageRoute(
                 builder: (_) => HomeScreen(
@@ -234,7 +235,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                         });
                                       },
                                       inactiveThumbColor: AppColor.switchColor,
-                                      activeColor: AppColor.primaryColor,
+                                      activeThumbColor: AppColor.primaryColor,
                                       activeTrackColor: AppColor.switchColor,
                                       inactiveTrackColor: Colors.white,
                                       materialTapTargetSize:
@@ -285,81 +286,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                     child: const CircularProgressIndicator(),
                                   ),
                                 SizedBox(height: 20.h),
-                                Center(
-                                  child: RichText(
-                                    text: TextSpan(
-                                      children: [
-                                        TextSpan(
-                                          text: 'نسيت كلمة السر؟ ',
-                                          style: AppStyle.font14_700Weight
-                                              .copyWith(
-                                            color: Colors.black,
-                                          ),
-                                        ),
-                                        TextSpan(
-                                          text: 'استعادة كلمة السر',
-                                          style: AppStyle.font14_700Weight
-                                              .copyWith(
-                                            color: const Color(0xFF68C3A2),
-                                          ),
-                                          recognizer: TapGestureRecognizer()
-                                            ..onTap = () {
-                                              // context.pushNamed(resetPassword);
-                                            },
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                                SizedBox(height: 10.h),
-                                ...(widget.isOnline
-                                    ? [
-                                        Row(
-                                          children: [
-                                            Expanded(
-                                              child: Divider(
-                                                color: Colors.grey.shade300,
-                                                thickness: 1,
-                                                indent: 50.w,
-                                                endIndent: 50.w,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                        Center(
-                                          child: RichText(
-                                            text: TextSpan(
-                                              children: [
-                                                TextSpan(
-                                                  text: 'ليس لديك حساب ؟ ',
-                                                  style: AppStyle
-                                                      .font14_700Weight
-                                                      .copyWith(
-                                                    color: Colors.black,
-                                                  ),
-                                                ),
-                                                TextSpan(
-                                                  text: 'انشاء حساب ',
-                                                  style: AppStyle
-                                                      .font14_700Weight
-                                                      .copyWith(
-                                                    color:
-                                                        const Color(0xFF68C3A2),
-                                                  ),
-                                                  recognizer:
-                                                      TapGestureRecognizer()
-                                                        ..onTap = () {
-                                                          // context.pushNamed(signUpScreen);
-                                                        },
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                        ),
-                                        SizedBox(height: 20.h),
-                                      ]
-                                    : []),
-                              ],
+                                  ],
                             ),
                           ),
                         ),
