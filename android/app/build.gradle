@@ -18,8 +18,8 @@ if (keystorePropertiesFile.exists()) {
 android {
     namespace = "com.tabibsoft.shifa_doctors"
 
-    compileSdk = 36
-    ndkVersion = flutter.ndkVersion
+    compileSdk = 35
+    ndkVersion = "26.1.10909125"
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_1_8
@@ -34,7 +34,7 @@ android {
     defaultConfig {
         applicationId "com.tabibsoft.shifa_doctors"
         minSdk = 24
-        targetSdk = 36
+        targetSdk = 35
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }
@@ -67,6 +67,12 @@ android {
             signingConfig signingConfigs.release
             minifyEnabled false
             shrinkResources false
+        }
+    }
+
+    packaging {
+        jniLibs {
+            useLegacyPackaging = false
         }
     }
 }
