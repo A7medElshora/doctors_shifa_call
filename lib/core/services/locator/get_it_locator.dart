@@ -3,7 +3,10 @@ import 'package:doctors_shifa_call/core/export.dart';
 import 'package:doctors_shifa_call/core/networking/api_service.dart';
 import 'package:doctors_shifa_call/features/auth/data/repos/login_repo.dart';
 import 'package:doctors_shifa_call/features/auth/data/repos/login_repo_imp.dart';
+import 'package:doctors_shifa_call/features/auth/data/repos/registration_repo.dart';
+import 'package:doctors_shifa_call/features/auth/data/repos/registration_repo_impl.dart';
 import 'package:doctors_shifa_call/features/auth/presentation/cubits/login_cubit.dart';
+import 'package:doctors_shifa_call/features/auth/presentation/cubits/registration_cubit.dart';
 import 'package:doctors_shifa_call/features/home/data/repos/booking/online_bookings_repo.dart';
 import 'package:doctors_shifa_call/features/home/data/repos/booking/termination_status_repo.dart';
 import 'package:doctors_shifa_call/features/home/data/repos/price/price_repo.dart';
@@ -11,7 +14,6 @@ import 'package:doctors_shifa_call/features/home/presentation/cubits/booking/onl
 import 'package:doctors_shifa_call/features/home/presentation/cubits/booking/termination_status_cubit.dart';
 import 'package:doctors_shifa_call/features/home/presentation/cubits/price/price_cubit.dart';
 import 'package:get_it/get_it.dart';
-
 
 class ServicesLocator {
   static final GetIt locator = GetIt.instance;
@@ -25,25 +27,43 @@ class ServicesLocator {
     locator.registerLazySingleton<IntroAppCubit>(() => IntroAppCubit());
 
     // auth
-    locator.registerLazySingleton<AuthRepository>(() => AuthRepositoryImpl(locator<ApiService>()));
-    locator.registerLazySingleton<AuthCubit>(() => AuthCubit(locator<AuthRepository>()));
+    locator.registerLazySingleton<AuthRepository>(
+        () => AuthRepositoryImpl(locator<ApiService>()));
+    locator.registerLazySingleton<AuthCubit>(
+        () => AuthCubit(locator<AuthRepository>()));
+
+    // registration
+    locator.registerLazySingleton<RegistrationRepository>(
+        () => RegistrationRepositoryImpl(locator<ApiService>()));
+    locator.registerLazySingleton<RegistrationCubit>(
+        () => RegistrationCubit(locator<RegistrationRepository>()));
 
     // online bookings
-    locator.registerLazySingleton<OnlineBookingsRepo>(() => OnlineBookingsRepo(locator<ApiService>()));
-    locator.registerLazySingleton<OnlineBookingsCubit>(() => OnlineBookingsCubit(locator<OnlineBookingsRepo>()));
+    locator.registerLazySingleton<OnlineBookingsRepo>(
+        () => OnlineBookingsRepo(locator<ApiService>()));
+    locator.registerLazySingleton<OnlineBookingsCubit>(
+        () => OnlineBookingsCubit(locator<OnlineBookingsRepo>()));
 
     // termination status
-    locator.registerLazySingleton<TerminationStatusRepo>(() => TerminationStatusRepo(locator<ApiService>()));
-    locator.registerLazySingleton<TerminationStatusCubit>(() => TerminationStatusCubit(locator<TerminationStatusRepo>()));
+    locator.registerLazySingleton<TerminationStatusRepo>(
+        () => TerminationStatusRepo(locator<ApiService>()));
+    locator.registerLazySingleton<TerminationStatusCubit>(
+        () => TerminationStatusCubit(locator<TerminationStatusRepo>()));
 
     // prices
-    locator.registerLazySingleton<PriceRepo>(() => PriceRepo(locator<ApiService>()));
-    locator.registerLazySingleton<PriceCubit>(() => PriceCubit(locator<PriceRepo>()));
+    locator.registerLazySingleton<PriceRepo>(
+        () => PriceRepo(locator<ApiService>()));
+    locator.registerLazySingleton<PriceCubit>(
+        () => PriceCubit(locator<PriceRepo>()));
   }
 
   static IntroAppCubit get introAppCubit => locator<IntroAppCubit>();
   static AuthCubit get authCubit => locator<AuthCubit>();
-  static OnlineBookingsCubit get onlineBookingsCubit => locator<OnlineBookingsCubit>();
-  static TerminationStatusCubit get terminationStatusCubit => locator<TerminationStatusCubit>();
+  static RegistrationCubit get registrationCubit =>
+      locator<RegistrationCubit>();
+  static OnlineBookingsCubit get onlineBookingsCubit =>
+      locator<OnlineBookingsCubit>();
+  static TerminationStatusCubit get terminationStatusCubit =>
+      locator<TerminationStatusCubit>();
   static PriceCubit get priceCubit => locator<PriceCubit>();
 }

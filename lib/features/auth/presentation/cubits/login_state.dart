@@ -9,4 +9,4 @@ class AuthState {
   AuthState({required this.status, this.loginResponse, this.errorMessage});
 }
 
-enum AuthStatus { initial, loading, success, failure }
+enum AuthStatus { initial, loading, success, failure, inactive }

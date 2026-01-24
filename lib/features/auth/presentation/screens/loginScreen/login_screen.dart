@@ -3,6 +3,8 @@ import 'package:doctors_shifa_call/core/utils/constant/app_style.dart';
 import 'package:doctors_shifa_call/core/utils/constant/constants.dart';
 import 'package:doctors_shifa_call/features/auth/presentation/cubits/login_cubit.dart';
 import 'package:doctors_shifa_call/features/auth/presentation/cubits/login_state.dart';
+import 'package:doctors_shifa_call/features/auth/presentation/screens/registrationScreen/registration_screen.dart';
+import 'package:doctors_shifa_call/features/auth/presentation/screens/account_inactive_screen.dart';
 import 'package:doctors_shifa_call/features/home/presentation/screens/home_screen.dart';
 import 'package:doctors_shifa_call/generated/locale_keys.g.dart';
 import 'package:easy_localization/easy_localization.dart';
@@ -47,7 +49,19 @@ class _LoginScreenState extends State<LoginScreen> {
               MaterialPageRoute(
                 builder: (_) => HomeScreen(
                   username: state.loginResponse!.userName,
+                  fullName: state.loginResponse!.doctor?.name ?? '',
                   doctorId: state.loginResponse!.doctorId.toString(),
+                ),
+              ),
+            );
+          } else if (state.status == AuthStatus.inactive &&
+                     state.loginResponse != null) {
+            // توجيه المستخدم لصفحة الحساب غير المفعل
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(
+                builder: (_) => AccountInactiveScreen(
+                  username: userNameController.text,
+                  password: passwordController.text,
                 ),
               ),
             );
@@ -286,7 +300,42 @@ class _LoginScreenState extends State<LoginScreen> {
                                     child: const CircularProgressIndicator(),
                                   ),
                                 SizedBox(height: 20.h),
-                                  ],
+
+                                // Registration Link
+                                RichText(
+                                  text: TextSpan(
+                                    text: 'ليس لديك حساب؟ ',
+                                    style: AppStyle.font14_400Weight.copyWith(
+                                      color: const Color(0xFF58595B),
+                                    ),
+                                    children: [
+                                      WidgetSpan(
+                                        child: GestureDetector(
+                                          onTap: () {
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (_) =>
+                                                    const RegistrationScreen(),
+                                              ),
+                                            );
+                                          },
+                                          child: Text(
+                                            'تسجيل حساب جديد',
+                                            style: AppStyle.font14_600Weight
+                                                .copyWith(
+                                              color: AppColor.primaryColor,
+                                              decoration:
+                                                  TextDecoration.underline,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                SizedBox(height: 10.h),
+                              ],
                             ),
                           ),
                         ),

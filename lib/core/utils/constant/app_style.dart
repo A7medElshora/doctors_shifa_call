@@ -56,6 +56,21 @@ class AppStyle {
     fontWeight: FontWeight.w600,
   );
 
+  static TextStyle font12_400Weight = TextStyle(
+    fontSize: 12.sp,
+    fontWeight: FontWeight.w400,
+  );
+
+  static TextStyle font14_600Weight = TextStyle(
+    fontSize: 14.sp,
+    fontWeight: FontWeight.w600,
+  );
+
+  static TextStyle font16_600Weight = TextStyle(
+    fontSize: 16.sp,
+    fontWeight: FontWeight.w600,
+  );
+
   static TextStyle font11_400Weight = TextStyle(
     fontSize: 11.sp,
     fontWeight: FontWeight.w400,
@@ -68,7 +83,7 @@ class AppStyle {
 
   static InputBorder borderDone({Color? color}) {
     return OutlineInputBorder(
-      borderSide:  BorderSide(color: color?? AppColor.containerColor),
+      borderSide: BorderSide(color: color ?? AppColor.containerColor),
       borderRadius: BorderRadius.circular(8),
     );
   }

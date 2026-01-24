@@ -13,4 +13,9 @@ class ApiConstants {
       'doctore_values/get_doctor_visit_value';
   static const String updateDoctorPricesEndpoint =
       'doctore_values/update_doctor_visit_value';
+
+  // Registration endpoints
+  static const String registerDoctorEndpoint = 'RegisterDoctor/RegisterDoctor';
+  static const String getSpecialtyDoctorEndpoint =
+      'RegisterDoctor/GetSpecialtyDoctor';
 }

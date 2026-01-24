@@ -11,14 +11,12 @@ class AuthRepositoryImpl implements AuthRepository {
   AuthRepositoryImpl(this._apiService);
 
   @override
-  Future<ApiResult<LoginResponse>> login(String username, String password) async {
+  Future<ApiResult<LoginResponse>> login(String username, String password,
+      {CancelToken? cancelToken}) async {
     try {
-      final responseList = await _apiService.login(username, password);
-      if (responseList.isNotEmpty) {
-        return ApiResult.success(responseList.first);
-      } else {
-        return ApiResult.failure(ServerFailure("Invalid credentials"));
-      }
+      final response =
+          await _apiService.login(username, password, cancelToken: cancelToken);
+      return ApiResult.success(response);
     } catch (e) {
       if (e is DioException) {
         return ApiResult.failure(ServerFailure.fromDioError(e));

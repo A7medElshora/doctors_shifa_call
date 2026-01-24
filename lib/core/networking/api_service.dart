@@ -1,4 +1,3 @@
-
 import 'package:dio/dio.dart';
 import 'package:doctors_shifa_call/features/home/data/models/booking/booking.dart';
 import 'package:doctors_shifa_call/features/home/data/models/price/price_model.dart';
@@ -9,6 +8,9 @@ import 'package:doctors_shifa_call/features/home/presentation/widgets/clinic_boo
 import 'package:retrofit/retrofit.dart';
 import 'package:doctors_shifa_call/core/networking/api_constants.dart';
 import 'package:doctors_shifa_call/features/auth/data/models/login_response.dart';
+import 'package:doctors_shifa_call/features/auth/data/models/specialty_model.dart';
+import 'package:doctors_shifa_call/features/auth/data/models/register_doctor_request.dart';
+import 'package:doctors_shifa_call/features/auth/data/models/register_doctor_response.dart';
 
 part 'api_service.g.dart';
 
@@ -16,11 +18,12 @@ part 'api_service.g.dart';
 abstract class ApiService {
   factory ApiService(Dio dio, {String baseUrl}) = _ApiService;
 
-  @GET(ApiConstants.loginEndpoint)
-  Future<List<LoginResponse>> login(
-    @Query("user_name") String username,
-    @Query("pass") String password,
-  );
+  @POST(ApiConstants.loginEndpoint)
+  Future<LoginResponse> login(
+    @Field("userName") String username,
+    @Field("password") String password, {
+    @CancelRequest() CancelToken? cancelToken,
+  });
 
   @GET(ApiConstants.getDaysEndpoint)
   Future<List<Day>> getDays();
@@ -61,4 +64,14 @@ abstract class ApiService {
     @Query("reservation_id") int reservationId,
     @Query("Termination_status_id") int statusId,
   );
+
+  // Registration endpoints
+  @GET(ApiConstants.getSpecialtyDoctorEndpoint)
+  Future<List<SpecialtyModel>> getSpecialties();
+
+  @POST(ApiConstants.registerDoctorEndpoint)
+  Future<RegisterDoctorResponse> registerDoctor(
+    @Body() RegisterDoctorRequest request, {
+    @CancelRequest() CancelToken? cancelToken,
+  });
 }

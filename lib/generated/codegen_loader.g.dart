@@ -178,7 +178,7 @@ class CodegenLoader extends AssetLoader {
     "do_you_have_account": "هل لديك حساب؟",
     "login": "تسجيل الدخول",
     "stay_logged_in": "ابقني مسجلاً",
-    "user_name": "اسم المستخدم",
+    "user_name": "البريد الاليكتروني ",
     "error": "خطأ",
     "try_agin": "حاول مرة اخرى",
     "no_location":

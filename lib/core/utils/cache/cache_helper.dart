@@ -116,4 +116,10 @@ class CacheHelper {
     return sharedPreferences.getInt(key) ?? 0;
   }
 
+  static bool getBoolean({
+    required String key,
+  }) {
+    return sharedPreferences.getBool(key) ?? true; // default to true for active status
+  }
+
 }

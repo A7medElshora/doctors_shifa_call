@@ -21,7 +21,8 @@ Widget buildAppWithProviders({required Widget child}) {
         create: (_) => ServicesLocator.authCubit,
       ),
       BlocProvider(
-        create: (_) => WorkHoursCubit(WorkHoursRepo(ApiService(DioFactory.getDio()))),
+        create: (_) =>
+            WorkHoursCubit(WorkHoursRepo(ApiService(DioFactory.getDio()))),
       ),
       BlocProvider(
         create: (_) => ServicesLocator.onlineBookingsCubit,
@@ -30,7 +31,11 @@ Widget buildAppWithProviders({required Widget child}) {
         create: (_) => PriceCubit(PriceRepo(ApiService(DioFactory.getDio()))),
       ),
       BlocProvider(
-        create: (_) => ServicesLocator.terminationStatusCubit..fetchTerminationStatuses(),
+        create: (_) =>
+            ServicesLocator.terminationStatusCubit..fetchTerminationStatuses(),
+      ),
+      BlocProvider(
+        create: (_) => ServicesLocator.registrationCubit,
       ),
     ],
     child: child,

@@ -18,13 +18,16 @@ class AppRouter {
         return MaterialPageRoute(
           builder: (_) {
             String username = '';
+            String fullName = '';
             String doctorId = '';
             if (arguments != null && arguments is Map<String, String>) {
               username = arguments['username'] ?? '';
+              fullName = arguments['fullName'] ?? '';
               doctorId = arguments['doctorId'] ?? '';
             }
             return HomeScreen(
               username: username,
+              fullName: fullName,
               doctorId: doctorId,
             );
           },

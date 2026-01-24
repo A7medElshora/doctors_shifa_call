@@ -9,11 +9,13 @@ import 'package:flutter_svg/svg.dart';
 
 class HomeScreen extends StatelessWidget {
   final String username;
+  final String fullName;
   final String doctorId;
 
   const HomeScreen({
     super.key,
     required this.username,
+    required this.fullName,
     required this.doctorId,
   });
 
@@ -51,7 +53,7 @@ class HomeScreen extends StatelessWidget {
                     children: [
                       const TextSpan(text: ' مرحبا بك , كيف حالك يا  '),
                       TextSpan(
-                        text: username,
+                        text: fullName.isNotEmpty ? fullName : username,
                         style: TextStyle(color: AppColor.primaryColor),
                       ),
                       const TextSpan(text: ' ؟'),

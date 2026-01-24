@@ -12,6 +12,10 @@ class AppColor {
   static const Color switchColor = Color(0xFFCDD9E5);
   static const Color unActiveIconColor = Color(0xFFBBBFD0);
   static const Color redButtonColor = Color(0xFFF26979);
+  static const Color redColor = Color(0xFFE53935);
+  static const Color redLightColor = Color(0xFFFFEBEE);
+  static const Color orangeWarningColor = Color(0xFFFF9800);
+  static const Color orangeLightColor = Color(0xFFFFF3E0);
 
   static const Color whiteColor = Color(0xFFEFEFEF);
   static const Color whiteBlueColor = Color(0xFFD6F8FF);

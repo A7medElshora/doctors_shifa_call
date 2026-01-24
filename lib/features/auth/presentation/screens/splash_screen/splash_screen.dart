@@ -26,12 +26,14 @@ class _SplashScreenState extends State<SplashScreen> {
 
     if (isOnline && isLoggedIn) {
       final String username = CacheHelper.getString(key: 'username');
+      final String doctorName = CacheHelper.getString(key: 'doctor_name');
       final int doctorId =
           CacheHelper.getInteger(key: 'doctor_id').toInt(); // استرجاع كـ int
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
           builder: (_) => HomeScreen(
             username: username,
+            fullName: doctorName,
             doctorId: doctorId.toString(), // تحويل إلى String إذا لزم الأمر
           ),
         ),
