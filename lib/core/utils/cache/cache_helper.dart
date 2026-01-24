@@ -55,7 +55,8 @@ class CacheHelper {
     required String key,
     required String value,
   }) async {
-    debugPrint('flutterSecureStorage setSecureStorage with key: $key and value: $value');
+    debugPrint(
+        'flutterSecureStorage setSecureStorage with key: $key and value: $value');
     const flutterSecureStorage = FlutterSecureStorage();
     await flutterSecureStorage.write(key: key, value: value);
   }
@@ -104,7 +105,7 @@ class CacheHelper {
     await setLoginStatus(false);
   }
 
-   static String getString({
+  static String getString({
     required String key,
   }) {
     return sharedPreferences.getString(key) ?? '';
@@ -119,7 +120,7 @@ class CacheHelper {
   static bool getBoolean({
     required String key,
   }) {
-    return sharedPreferences.getBool(key) ?? true; // default to true for active status
+    return sharedPreferences.getBool(key) ??
+        true; // default to true for active status
   }
-
 }

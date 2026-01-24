@@ -66,7 +66,8 @@ class AuthCubit extends Cubit<AuthState> {
             await CacheHelper.saveData(
                 key: 'doctor_photo', value: loginResponse.doctor!.photo ?? '');
             await CacheHelper.saveData(
-                key: 'doctor_is_active', value: loginResponse.doctor!.isActive ?? true);
+                key: 'doctor_is_active',
+                value: loginResponse.doctor!.isActive ?? true);
           }
 
           emit(AuthState(
@@ -96,7 +97,7 @@ class AuthCubit extends Cubit<AuthState> {
         bool isActive = CacheHelper.getBoolean(key: 'doctor_is_active');
         print(
             'CheckLoginStatus: userId=$userId, userName=$userName, doctorId=$doctorId, isActive=$isActive');
-        
+
         if (doctorId == 0) {
           print('Error: Retrieved doctor_id is 0, logging out');
           await logout();
@@ -104,16 +105,16 @@ class AuthCubit extends Cubit<AuthState> {
               status: AuthStatus.failure, errorMessage: 'Invalid doctor ID'));
           return;
         }
-        
+
         // Check if account is inactive
         if (!isActive) {
           print('CheckLoginStatus: Account is inactive');
           emit(AuthState(
-              status: AuthStatus.inactive, 
+              status: AuthStatus.inactive,
               errorMessage: 'حساب الطبيب غير مفعل'));
           return;
         }
-        
+
         emit(AuthState(
           status: AuthStatus.success,
           loginResponse: LoginResponse(

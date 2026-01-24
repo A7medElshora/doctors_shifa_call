@@ -55,7 +55,7 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
             );
           } else if (state.status == AuthStatus.inactive &&
-                     state.loginResponse != null) {
+              state.loginResponse != null) {
             // توجيه المستخدم لصفحة الحساب غير المفعل
             Navigator.of(context).pushReplacement(
               MaterialPageRoute(
