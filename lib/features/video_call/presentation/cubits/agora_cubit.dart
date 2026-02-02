@@ -52,7 +52,7 @@ class AgoraState {
 // Cubit
 class AgoraCubit extends Cubit<AgoraState> {
   // NOTE: Replace with your actual Agora App ID
-  static const String appId = '5aec2ab98801443988fedf8149eee82c'; 
+  static const String appId = '5f8fca9b0ca74ad796071dcbcb5d8441';
   final AgoraService _agoraService = AgoraService();
 
   AgoraCubit() : super(AgoraState());
@@ -79,8 +79,7 @@ class AgoraCubit extends Cubit<AgoraState> {
 
       if (cameraStatus != PermissionStatus.granted ||
           micStatus != PermissionStatus.granted) {
-        _updateStatus(
-            'تم رفض الإذن. يرجى منح صلاحيات الكاميرا والميكروفون.');
+        _updateStatus('تم رفض الإذن. يرجى منح صلاحيات الكاميرا والميكروفون.');
         return;
       }
     } catch (e) {
@@ -91,11 +90,11 @@ class AgoraCubit extends Cubit<AgoraState> {
     // 2. Initialize Engine
     try {
       final engine = await _agoraService.initializeEngine(appId);
-      
+
       // إضافة: تمكين الفيديو والصوت صراحة لتجنب الشاشة البيضاء
       await engine.enableVideo();
       await engine.enableAudio();
-      
+
       emit(state.copyWith(engine: engine, channelId: channelName));
       _setupEngineCallbacks(engine);
     } catch (e) {
@@ -107,39 +106,39 @@ class AgoraCubit extends Cubit<AgoraState> {
     try {
       _updateStatus('جاري جلب التوكن...');
       final tokenData = await _agoraService.getToken(channelName, userId);
-      
+
       // تحقق من الاستجابة
       if (tokenData.isEmpty || !tokenData.containsKey('token')) {
         throw Exception('استجابة التوكن غير صالحة: ${tokenData.toString()}');
       }
-      
+
       final token = tokenData['token'] as String;
-      
+
       _updateStatus('جاري الانضمام للقناة...');
-      
+
       // تعديل: استخدم userId كـ UID (حوله إلى int إن أمكن)، وأضف تحذيراً إذا كان 0
       final uid = int.tryParse(userId) ?? 0;
       if (uid == 0) {
         debugPrint('تحذير: UID غير رقمي، سيتم استخدام UID تلقائي (0)');
       }
-      
+
       await state.engine!.joinChannel(
         token: token,
         channelId: channelName,
-        uid: uid,  // UID = userId (مثل 0 إذا لم يكن رقمياً)
+        uid: uid, // UID = userId (مثل 0 إذا لم يكن رقمياً)
         options: const ChannelMediaOptions(
           clientRoleType: ClientRoleType.clientRoleBroadcaster,
           channelProfile: ChannelProfileType.channelProfileCommunication,
         ),
       );
-      
+
       // إضافة جديدة: تمكين مراقبة حجم الصوت للتحقق من الكتم (مع البارامترات المطلوبة)
       await state.engine!.enableAudioVolumeIndication(
-        interval: 200,  // كل 200ms
-        smooth: 3,      // عامل التنعيم (1-10)
-        reportVad: true // تمكين كشف نشاط الصوت
-      );
-      
+          interval: 200, // كل 200ms
+          smooth: 3, // عامل التنعيم (1-10)
+          reportVad: true // تمكين كشف نشاط الصوت
+          );
+
       emit(state.copyWith(isConnected: true));
     } catch (e) {
       debugPrint('فشل في جلب التوكن أو الانضمام: $e');
@@ -153,7 +152,8 @@ class AgoraCubit extends Cubit<AgoraState> {
       RtcEngineEventHandler(
         onJoinChannelSuccess: (connection, elapsed) {
           debugPrint("المستخدم المحلي ${connection.localUid} انضم");
-          emit(state.copyWith(isJoined: true, statusMessage: 'تم الانضمام للقناة بنجاح.'));
+          emit(state.copyWith(
+              isJoined: true, statusMessage: 'تم الانضمام للقناة بنجاح.'));
         },
         onUserJoined: (connection, remoteUid, elapsed) {
           debugPrint("المستخدم البعيد $remoteUid انضم");
@@ -178,8 +178,12 @@ class AgoraCubit extends Cubit<AgoraState> {
           _updateStatus('خطأ Agora: $msg');
         },
         // إضافة جديدة: مراقبة حجم الصوت للتحقق من الكتم (مع البارامترات الكاملة)
-        onAudioVolumeIndication: (RtcConnection connection, List<AudioVolumeInfo> speakers, int speakerNumber, int totalVolume) {
-          debugPrint('حجم الصوت: $totalVolume (عدد المتحدثين: $speakerNumber)');  // لو 0 بعد الكتم، معناها نجح
+        onAudioVolumeIndication: (RtcConnection connection,
+            List<AudioVolumeInfo> speakers,
+            int speakerNumber,
+            int totalVolume) {
+          debugPrint(
+              'حجم الصوت: $totalVolume (عدد المتحدثين: $speakerNumber)'); // لو 0 بعد الكتم، معناها نجح
           // إذا كان هناك متحدث محلي، يمكن طباعة تفاصيل إضافية
           if (speakers.isNotEmpty) {
             final localSpeaker = speakers.firstWhere(
@@ -211,8 +215,9 @@ class AgoraCubit extends Cubit<AgoraState> {
       // قلب الحالة: localAudioEnabled = true (مفعل) → false (مُكْتَم)
       final newAudioEnabled = !state.localAudioEnabled;
       // تطبيق على المحلي فقط (لا تكتم البعيد)
-      state.engine!.enableLocalAudio(newAudioEnabled);  // مفعل/معطل التقاط الصوت
-      state.engine!.muteLocalAudioStream(!newAudioEnabled);  // كتم الإرسال إذا مُكْتَم
+      state.engine!.enableLocalAudio(newAudioEnabled); // مفعل/معطل التقاط الصوت
+      state.engine!
+          .muteLocalAudioStream(!newAudioEnabled); // كتم الإرسال إذا مُكْتَم
       // إصدار الحدث الجديد
       emit(state.copyWith(localAudioEnabled: newAudioEnabled));
       _updateStatus(newAudioEnabled ? 'تم تشغيل الصوت' : 'تم كتم الصوت');
