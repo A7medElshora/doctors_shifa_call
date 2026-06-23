@@ -97,6 +97,9 @@ class DoctorData {
   @JsonKey(name: 'IsActive')
   final bool? isActive;
 
+  @JsonKey(name: 'University')
+  final String? university;
+
   DoctorData({
     required this.id,
     required this.name,
@@ -107,6 +110,7 @@ class DoctorData {
     this.photo,
     this.birthDate,
     this.isActive,
+    this.university,
   });
 
   factory DoctorData.fromJson(Map<String, dynamic> json) =>

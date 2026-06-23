@@ -1,13 +1,17 @@
 import 'package:doctors_shifa_call/core/utils/constant/app_color.dart';
+import 'package:doctors_shifa_call/features/auth/presentation/cubits/login_cubit.dart';
+import 'package:doctors_shifa_call/features/auth/presentation/cubits/login_state.dart';
+import 'package:doctors_shifa_call/features/auth/presentation/screens/loginScreen/login_screen.dart';
 import 'package:doctors_shifa_call/features/home/presentation/screens/price/price_screen.dart';
 import 'package:doctors_shifa_call/features/home/presentation/screens/settings/settings_screen.dart';
 import 'package:doctors_shifa_call/features/home/presentation/widgets/bookings_screen.dart';
 import 'package:doctors_shifa_call/features/home/presentation/widgets/work_hours_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   final String username;
   final String fullName;
   final String doctorId;
@@ -20,147 +24,203 @@ class HomeScreen extends StatelessWidget {
   });
 
   @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  bool _isNavigatingToLogin = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+      context.read<AuthCubit>().startAccountStatusMonitoring(
+            interval: const Duration(seconds: 10),
+          );
+    });
+  }
+
+  void _navigateToLoginIfNeeded({String? message}) {
+    if (_isNavigatingToLogin || !mounted) {
+      return;
+    }
+
+    _isNavigatingToLogin = true;
+    if (message != null && message.isNotEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(message)),
+      );
+    }
+
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(
+        builder: (_) => const LoginScreen(isOnline: true),
+      ),
+      (route) => false,
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Scaffold(
-        // appBar: PreferredSize(
-        //   preferredSize: Size.fromHeight(60.h),
-        //   child: CustomAppBar(
-        //     showBell: true,
-        //     showUserIcon: true,
-        //     showGridInLeading: false,
-        //     showBackInLeading: false,
-        //     showBackButton: false,
-        //     onBackPressed: () {},
-        //     onGridPressed: () {},
-        //   ),
-        // ),
-        body: SafeArea(
-          child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16.w),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                SizedBox(height: 30.h),
-                RichText(
-                  text: TextSpan(
-                    style: TextStyle(
-                      fontSize: 20.sp,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black87,
+    return BlocListener<AuthCubit, AuthState>(
+        listener: (context, state) {
+          if (state.status == AuthStatus.inactive) {
+            _navigateToLoginIfNeeded(
+              message:
+                  state.errorMessage ?? 'تم تعطيل الحساب، تم تسجيل الخروج.',
+            );
+            return;
+          }
+
+          if (state.status == AuthStatus.initial) {
+            _navigateToLoginIfNeeded();
+          }
+        },
+        child: Directionality(
+          textDirection: TextDirection.rtl,
+          child: Scaffold(
+            // appBar: PreferredSize(
+            //   preferredSize: Size.fromHeight(60.h),
+            //   child: CustomAppBar(
+            //     showBell: true,
+            //     showUserIcon: true,
+            //     showGridInLeading: false,
+            //     showBackInLeading: false,
+            //     showBackButton: false,
+            //     onBackPressed: () {},
+            //     onGridPressed: () {},
+            //   ),
+            // ),
+            body: SafeArea(
+              child: Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16.w),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SizedBox(height: 30.h),
+                    RichText(
+                      text: TextSpan(
+                        style: TextStyle(
+                          fontSize: 20.sp,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87,
+                        ),
+                        children: [
+                          const TextSpan(text: ' مرحبا بك , كيف حالك يا  '),
+                          TextSpan(
+                            text: widget.fullName.isNotEmpty
+                                ? widget.fullName
+                                : widget.username,
+                            style: TextStyle(color: AppColor.primaryColor),
+                          ),
+                          const TextSpan(text: ' ؟'),
+                        ],
+                      ),
                     ),
-                    children: [
-                      const TextSpan(text: ' مرحبا بك , كيف حالك يا  '),
-                      TextSpan(
-                        text: fullName.isNotEmpty ? fullName : username,
-                        style: TextStyle(color: AppColor.primaryColor),
+                    SizedBox(height: 40.h),
+                    Container(
+                      height: 150.h,
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(16.r),
+                        image: const DecorationImage(
+                          image: AssetImage('assets/images/slider1.png'),
+                          fit: BoxFit.cover,
+                        ),
                       ),
-                      const TextSpan(text: ' ؟'),
-                    ],
-                  ),
-                ),
-                SizedBox(height: 40.h),
-                Container(
-                  height: 150.h,
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(16.r),
-                    image: const DecorationImage(
-                      image: AssetImage('assets/images/slider1.png'),
-                      fit: BoxFit.cover,
                     ),
-                  ),
+                    SizedBox(height: 40.h),
+                    Expanded(
+                      child: GridView.count(
+                        crossAxisCount: 2,
+                        mainAxisSpacing: 30.h,
+                        crossAxisSpacing: 16.w,
+                        childAspectRatio: 0.9,
+                        children: [
+                          _HomeCard(
+                            iconWidget: Image.asset(
+                              'assets/images/svgs/work_hour.png',
+                              width: 60.w,
+                              height: 60.w,
+                            ),
+                            title: 'ساعات العمل',
+                            subtitle: 'اختيار و معرفة المواعيد المتاحة',
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => WorkHoursScreen(
+                                      doctorId: widget.doctorId),
+                                ),
+                              );
+                            },
+                          ),
+                          _HomeCard(
+                            iconWidget: SvgPicture.asset(
+                              'assets/images/svgs/on_clinic.svg',
+                              width: 60.w,
+                              height: 60.w,
+                            ),
+                            title: 'حجوزاتي',
+                            subtitle: 'حجز مواعيدك في العيادة',
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) =>
+                                      BookingsScreen(doctorId: widget.doctorId),
+                                ),
+                              );
+                            },
+                          ),
+                          _HomeCard(
+                            iconWidget: Image.asset(
+                              'assets/images/svgs/patient_file.png',
+                              width: 60.w,
+                              height: 60.w,
+                            ),
+                            title: 'السعر',
+                            subtitle: 'تحديث أسعار الكشف',
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => PriceScreen(
+                                    doctorId: widget.doctorId,
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                          _HomeCard(
+                            iconWidget: Image.asset(
+                              'assets/images/svgs/settings.png',
+                              width: 60.w,
+                              height: 60.w,
+                            ),
+                            title: 'الإعدادات',
+                            subtitle: 'الاعدادات وتسجيل الخروج',
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => SettingsScreen(),
+                                ),
+                              );
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
-                SizedBox(height: 40.h),
-                Expanded(
-                  child: GridView.count(
-                    crossAxisCount: 2,
-                    mainAxisSpacing: 30.h,
-                    crossAxisSpacing: 16.w,
-                    childAspectRatio: 0.9,
-                    children: [
-                      _HomeCard(
-                        iconWidget: Image.asset(
-                          'assets/images/svgs/work_hour.png',
-                          width: 60.w,
-                          height: 60.w,
-                        ),
-                        title: 'ساعات العمل',
-                        subtitle: 'اختيار و معرفة المواعيد المتاحة',
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) =>
-                                  WorkHoursScreen(doctorId: doctorId),
-                            ),
-                          );
-                        },
-                      ),
-                      _HomeCard(
-                        iconWidget: SvgPicture.asset(
-                          'assets/images/svgs/on_clinic.svg',
-                          width: 60.w,
-                          height: 60.w,
-                        ),
-                        title: 'حجوزاتي',
-                        subtitle: 'حجز مواعيدك في العيادة',
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) =>
-                                  BookingsScreen(doctorId: doctorId),
-                            ),
-                          );
-                        },
-                      ),
-                      _HomeCard(
-                        iconWidget: Image.asset(
-                          'assets/images/svgs/patient_file.png',
-                          width: 60.w,
-                          height: 60.w,
-                        ),
-                        title: 'السعر',
-                        subtitle: 'تحديث أسعار الكشف',
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => PriceScreen(
-                                doctorId: doctorId,
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                      _HomeCard(
-                        iconWidget: Image.asset(
-                          'assets/images/svgs/settings.png',
-                          width: 60.w,
-                          height: 60.w,
-                        ),
-                        title: 'الإعدادات',
-                        subtitle: 'الاعدادات وتسجيل الخروج',
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => SettingsScreen(),
-                            ),
-                          );
-                        },
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+              ),
             ),
           ),
-        ),
-      ),
-    );
+        ));
   }
 }
 
@@ -171,7 +231,6 @@ class _HomeCard extends StatelessWidget {
   final VoidCallback onTap;
 
   const _HomeCard({
-    super.key,
     required this.iconWidget,
     required this.title,
     required this.subtitle,

@@ -18,4 +18,14 @@ class SpecialtyModel {
   factory SpecialtyModel.fromJson(Map<String, dynamic> json) =>
       _$SpecialtyModelFromJson(json);
   Map<String, dynamic> toJson() => _$SpecialtyModelToJson(this);
+
+  @override
+  bool operator ==(Object other) {
+    return other is SpecialtyModel &&
+        other.specialityId == specialityId &&
+        other.specialityDesc == specialityDesc;
+  }
+
+  @override
+  int get hashCode => Object.hash(specialityId, specialityDesc);
 }

@@ -75,4 +75,32 @@ class RegistrationRepositoryImpl implements RegistrationRepository {
       }
     }
   }
+
+  @override
+  Future<ApiResult<RegisterDoctorResponse>> updateDoctorProfile(
+      RegisterDoctorRequest request,
+      {CancelToken? cancelToken}) async {
+    try {
+      debugPrint('Updating doctor profile via real update endpoint...');
+      debugPrint('Update payload: DoctorId=${request.doctorId}, '
+          'Name=${request.name}, Mobile=${request.mobile}, '
+          'BirthDate=${request.birthDate}, SpecialityId=${request.specialityId}');
+
+      final response =
+          await _apiService.updateDoctor(request, cancelToken: cancelToken);
+
+      debugPrint(
+          'Update response: success=${response.success}, message=${response.message}, doctorId=${response.doctorId}');
+      return ApiResult.success(response);
+    } catch (e, stackTrace) {
+      debugPrint('Error updating doctor profile: $e');
+      debugPrint('Stack trace: $stackTrace');
+      if (e is DioException) {
+        debugPrint('DioException status: ${e.response?.statusCode}');
+        debugPrint('DioException response data: ${e.response?.data}');
+        return ApiResult.failure(ServerFailure.fromDioError(e));
+      }
+      return ApiResult.failure(ServerFailure(e.toString()));
+    }
+  }
 }

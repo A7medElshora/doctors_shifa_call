@@ -3,6 +3,7 @@ import 'package:doctors_shifa_call/core/utils/cache/cache_helper.dart';
 import 'package:doctors_shifa_call/features/auth/data/models/doctor_profile.dart';
 import 'package:doctors_shifa_call/features/auth/presentation/cubits/registration_cubit.dart';
 import 'package:doctors_shifa_call/features/auth/presentation/screens/loginScreen/login_screen.dart';
+import 'package:doctors_shifa_call/features/auth/presentation/screens/registrationScreen/registration_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:doctors_shifa_call/core/utils/constant/app_color.dart';
@@ -26,6 +27,8 @@ class _SettingsScreenState extends State<SettingsScreen>
   bool _isLoadingProfile = true;
   int _doctorAge = 0;
   String? _doctorPhotoUrl;
+  bool _isNavigatingToLogin = false;
+
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
 
@@ -40,6 +43,14 @@ class _SettingsScreenState extends State<SettingsScreen>
       CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
     );
     _loadDoctorProfile();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+      context.read<AuthCubit>().startAccountStatusMonitoring(
+            interval: const Duration(seconds: 10),
+          );
+    });
   }
 
   @override
@@ -74,8 +85,13 @@ class _SettingsScreenState extends State<SettingsScreen>
 
       final String photoName = CacheHelper.getString(key: 'doctor_photo');
       if (photoName.isNotEmpty) {
-        _doctorPhotoUrl =
-            'https://185.135.137.90:44302/doctor_images/$photoName';
+        if (photoName.startsWith('http') ||
+            photoName.startsWith('data:image')) {
+          _doctorPhotoUrl = photoName;
+        } else {
+          _doctorPhotoUrl =
+              'https://185.135.137.90:44302/doctor_images/$photoName';
+        }
       }
 
       _doctorProfile = DoctorProfile(
@@ -117,19 +133,124 @@ class _SettingsScreenState extends State<SettingsScreen>
     }
   }
 
+  void _openEditProfileScreen() {
+    if (_doctorProfile == null) {
+      return;
+    }
+    Navigator.of(context)
+        .push(
+          MaterialPageRoute(
+            builder: (_) => RegistrationScreen(
+              isEditMode: true,
+              initialProfile: _doctorProfile,
+            ),
+          ),
+        )
+        .then((_) => _loadDoctorProfile());
+  }
+
+  void _showProfileImagePreview() {
+    if (_doctorPhotoUrl == null || _doctorPhotoUrl!.isEmpty) {
+      return;
+    }
+
+    showDialog(
+      context: context,
+      builder: (dialogContext) {
+        Widget preview;
+        if (_doctorPhotoUrl!.startsWith('data:image')) {
+          try {
+            final base64Data = _doctorPhotoUrl!.split(',').last;
+            final imageBytes = base64Decode(base64Data);
+            preview = Image.memory(imageBytes, fit: BoxFit.contain);
+          } catch (_) {
+            preview = Icon(
+              Icons.broken_image_outlined,
+              color: Colors.white,
+              size: 80.sp,
+            );
+          }
+        } else {
+          preview = Image.network(
+            _doctorPhotoUrl!,
+            fit: BoxFit.contain,
+            errorBuilder: (_, __, ___) => Icon(
+              Icons.broken_image_outlined,
+              color: Colors.white,
+              size: 80.sp,
+            ),
+          );
+        }
+
+        return Dialog(
+          insetPadding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 40.h),
+          backgroundColor: Colors.black.withOpacity(0.85),
+          child: Stack(
+            children: [
+              Padding(
+                padding: EdgeInsets.all(12.r),
+                child: InteractiveViewer(
+                  minScale: 0.8,
+                  maxScale: 4,
+                  child: SizedBox(
+                    width: 1.sw,
+                    height: 0.7.sh,
+                    child: Center(child: preview),
+                  ),
+                ),
+              ),
+              Positioned(
+                top: 8.h,
+                right: 8.w,
+                child: IconButton(
+                  onPressed: () => Navigator.of(dialogContext).pop(),
+                  icon: Icon(
+                    Icons.close_rounded,
+                    color: Colors.white,
+                    size: 24.sp,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _navigateToLoginIfNeeded({String? message}) {
+    if (_isNavigatingToLogin || !mounted) {
+      return;
+    }
+
+    _isNavigatingToLogin = true;
+    if (message != null && message.isNotEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(message)),
+      );
+    }
+
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(
+        builder: (_) => const LoginScreen(isOnline: true),
+      ),
+      (route) => false,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColor.backGroundColor,
       body: BlocConsumer<AuthCubit, AuthState>(
         listener: (context, state) {
-          if (state.status == AuthStatus.initial) {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(
-                builder: (_) => const LoginScreen(isOnline: true),
-              ),
+          if (state.status == AuthStatus.inactive) {
+            _navigateToLoginIfNeeded(
+              message:
+                  state.errorMessage ?? 'تم تعطيل الحساب، تم تسجيل الخروج.',
             );
+          } else if (state.status == AuthStatus.initial) {
+            _navigateToLoginIfNeeded();
           } else if (state.status == AuthStatus.failure) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
@@ -144,181 +265,150 @@ class _SettingsScreenState extends State<SettingsScreen>
           }
         },
         builder: (context, state) {
-          return CustomScrollView(
-            slivers: [
-              // App Bar مخصص مع تصميم متدرج
-              SliverAppBar(
-                expandedHeight: 200.h,
-                floating: false,
-                pinned: true,
-                backgroundColor: AppColor.primaryColor,
-                leading: Container(
-                  margin: EdgeInsets.all(8.w),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(12.r),
+          return RefreshIndicator(
+            onRefresh: _loadDoctorProfile,
+            color: AppColor.primaryColor,
+            child: CustomScrollView(
+              slivers: [
+                // App Bar مخصص مع تصميم متدرج
+                SliverAppBar(
+                  expandedHeight: 200.h,
+                  floating: false,
+                  pinned: true,
+                  backgroundColor: AppColor.primaryColor,
+                  leading: Container(
+                    margin: EdgeInsets.all(8.w),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(12.r),
+                    ),
+                    child: IconButton(
+                      icon: Icon(Icons.arrow_back_ios_new_rounded,
+                          color: Colors.white, size: 20.sp),
+                      onPressed: () => Navigator.of(context).pop(),
+                    ),
                   ),
-                  child: IconButton(
-                    icon: Icon(Icons.arrow_back_ios_new_rounded,
-                        color: Colors.white, size: 20.sp),
-                    onPressed: () => Navigator.of(context).pop(),
-                  ),
-                ),
-                flexibleSpace: FlexibleSpaceBar(
-                  background: Container(
-                    decoration: const BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [Color(0xFF68C3A2), Color(0xFF20BAC9)],
+                  flexibleSpace: FlexibleSpaceBar(
+                    background: Container(
+                      decoration: const BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [Color(0xFF68C3A2), Color(0xFF20BAC9)],
+                        ),
+                      ),
+                      child: Stack(
+                        children: [
+                          // دوائر ديكور
+                          Positioned(
+                            top: -50.h,
+                            right: -30.w,
+                            child: Container(
+                              width: 150.w,
+                              height: 150.h,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: Colors.white.withOpacity(0.1),
+                              ),
+                            ),
+                          ),
+                          Positioned(
+                            bottom: 20.h,
+                            left: -40.w,
+                            child: Container(
+                              width: 100.w,
+                              height: 100.h,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: Colors.white.withOpacity(0.08),
+                              ),
+                            ),
+                          ),
+                          // العنوان
+                          Positioned(
+                            bottom: 30.h,
+                            left: 24.w,
+                            right: 24.w,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  LocaleKeys.settings.tr(),
+                                  style: AppStyle.font24_700Weight.copyWith(
+                                    color: Colors.white,
+                                    letterSpacing: 0.5,
+                                  ),
+                                ),
+                                SizedBox(height: 8.h),
+                                Text(
+                                  'إدارة حسابك وتفضيلاتك',
+                                  style: AppStyle.font14_400Weight.copyWith(
+                                    color: Colors.white.withOpacity(0.9),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    child: Stack(
-                      children: [
-                        // دوائر ديكور
-                        Positioned(
-                          top: -50.h,
-                          right: -30.w,
-                          child: Container(
-                            width: 150.w,
-                            height: 150.h,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: Colors.white.withOpacity(0.1),
+                  ),
+                ),
+
+                // المحتوى الرئيسي
+                SliverToBoxAdapter(
+                  child: FadeTransition(
+                    opacity: _fadeAnimation,
+                    child: Padding(
+                      padding: EdgeInsets.all(20.w),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // قسم الملف الشخصي
+                          if (_isLoadingProfile)
+                            _buildLoadingProfileSection()
+                          else if (_doctorProfile != null)
+                            _buildDoctorProfileSection()
+                          else
+                            _buildNoProfileSection(),
+
+                          SizedBox(height: 24.h),
+
+                          // خيارات الإعدادات
+                          _buildSettingsOptions(),
+
+                          SizedBox(height: 24.h),
+
+                          // خيارات إضافية
+                          _buildMoreOptions(),
+
+                          SizedBox(height: 32.h),
+
+                          // زر تسجيل الخروج
+                          _buildLogoutButton(state),
+
+                          SizedBox(height: 24.h),
+
+                          // معلومات الإصدار
+                          Center(
+                            child: Text(
+                              'الإصدار 1.0.0',
+                              style: AppStyle.font12_400Weight.copyWith(
+                                color: AppColor.hintColor,
+                              ),
                             ),
                           ),
-                        ),
-                        Positioned(
-                          bottom: 20.h,
-                          left: -40.w,
-                          child: Container(
-                            width: 100.w,
-                            height: 100.h,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: Colors.white.withOpacity(0.08),
-                            ),
-                          ),
-                        ),
-                        // العنوان
-                        Positioned(
-                          bottom: 30.h,
-                          left: 24.w,
-                          right: 24.w,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                LocaleKeys.settings.tr(),
-                                style: AppStyle.font24_700Weight.copyWith(
-                                  color: Colors.white,
-                                  letterSpacing: 0.5,
-                                ),
-                              ),
-                              SizedBox(height: 8.h),
-                              Text(
-                                'إدارة حسابك وتفضيلاتك',
-                                style: AppStyle.font14_400Weight.copyWith(
-                                  color: Colors.white.withOpacity(0.9),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
+
+                          SizedBox(height: 20.h),
+                        ],
+                      ),
                     ),
                   ),
                 ),
-              ),
-
-              // المحتوى الرئيسي
-              SliverToBoxAdapter(
-                child: FadeTransition(
-                  opacity: _fadeAnimation,
-                  child: Padding(
-                    padding: EdgeInsets.all(20.w),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // قسم الملف الشخصي
-                        if (_isLoadingProfile)
-                          _buildLoadingProfileSection()
-                        else if (_doctorProfile != null)
-                          _buildDoctorProfileSection()
-                        else
-                          _buildNoProfileSection(),
-
-                        SizedBox(height: 24.h),
-
-                        // عنوان قسم الإعدادات
-                        // _buildSectionTitle('إعدادات الحساب'),
-
-                        SizedBox(height: 16.h),
-
-                        // خيارات الإعدادات
-                        _buildSettingsOptions(),
-
-                        SizedBox(height: 24.h),
-
-                        // عنوان قسم آخر
-                        // _buildSectionTitle('المزيد'),
-
-                        SizedBox(height: 16.h),
-
-                        // خيارات إضافية
-                        _buildMoreOptions(),
-
-                        SizedBox(height: 32.h),
-
-                        // زر تسجيل الخروج
-                        _buildLogoutButton(state),
-
-                        SizedBox(height: 24.h),
-
-                        // معلومات الإصدار
-                        Center(
-                          child: Text(
-                            'الإصدار 1.0.0',
-                            style: AppStyle.font12_400Weight.copyWith(
-                              color: AppColor.hintColor,
-                            ),
-                          ),
-                        ),
-
-                        SizedBox(height: 20.h),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ],
+              ],
+            ),
           );
         },
-      ),
-    );
-  }
-
-  Widget _buildSectionTitle(String title) {
-    return Padding(
-      padding: EdgeInsets.only(right: 4.w),
-      child: Row(
-        children: [
-          Container(
-            width: 4.w,
-            height: 20.h,
-            decoration: BoxDecoration(
-              color: AppColor.primaryColor,
-              borderRadius: BorderRadius.circular(2.r),
-            ),
-          ),
-          SizedBox(width: 10.w),
-          Text(
-            title,
-            style: AppStyle.font16_700Weight.copyWith(
-              color: AppColor.titleColor,
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -336,39 +426,6 @@ class _SettingsScreenState extends State<SettingsScreen>
           ),
         ],
       ),
-      // child: Column(
-      //   children: [
-      //     _buildSettingItem(
-      //       icon: Icons.person_outline_rounded,
-      //       title: 'تعديل الملف الشخصي',
-      //       subtitle: 'تحديث معلوماتك الشخصية',
-      //       onTap: () {
-      //         // TODO: Navigate to edit profile
-      //       },
-      //     ),
-      //     _buildDivider(),
-      //     _buildSettingItem(
-      //       icon: Icons.notifications_outlined,
-      //       title: 'الإشعارات',
-      //       subtitle: 'إدارة تنبيهات التطبيق',
-      //       trailing: Switch(
-      //         value: true,
-      //         onChanged: (value) {},
-      //         activeThumbColor: AppColor.primaryColor,
-      //       ),
-      //       onTap: () {},
-      //     ),
-      //     _buildDivider(),
-      //     _buildSettingItem(
-      //       icon: Icons.language_rounded,
-      //       title: 'اللغة',
-      //       subtitle: 'العربية',
-      //       onTap: () {
-      //         // TODO: Navigate to language settings
-      //       },
-      //     ),
-      //   ],
-      // ),
     );
   }
 
@@ -385,108 +442,6 @@ class _SettingsScreenState extends State<SettingsScreen>
           ),
         ],
       ),
-      // child: Column(
-      //   children: [
-      //     _buildSettingItem(
-      //       icon: Icons.help_outline_rounded,
-      //       title: 'المساعدة والدعم',
-      //       subtitle: 'الأسئلة الشائعة والتواصل',
-      //       onTap: () {
-      //         // TODO: Navigate to help
-      //       },
-      //     ),
-      //     _buildDivider(),
-      //     _buildSettingItem(
-      //       icon: Icons.privacy_tip_outlined,
-      //       title: 'سياسة الخصوصية',
-      //       subtitle: 'اقرأ شروط الاستخدام',
-      //       onTap: () {
-      //         // TODO: Navigate to privacy
-      //       },
-      //     ),
-      //     _buildDivider(),
-      //     _buildSettingItem(
-      //       icon: Icons.info_outline_rounded,
-      //       title: 'عن التطبيق',
-      //       subtitle: 'معلومات عن شفاء',
-      //       onTap: () {
-      //         // TODO: Navigate to about
-      //       },
-      //     ),
-      //   ],
-      // ),
-    );
-  }
-
-  Widget _buildSettingItem({
-    required IconData icon,
-    required String title,
-    required String subtitle,
-    Widget? trailing,
-    required VoidCallback onTap,
-  }) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(16.r),
-        child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
-          child: Row(
-            children: [
-              Container(
-                padding: EdgeInsets.all(10.w),
-                decoration: BoxDecoration(
-                  color: AppColor.primaryColor.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(12.r),
-                ),
-                child: Icon(
-                  icon,
-                  color: AppColor.primaryColor,
-                  size: 22.sp,
-                ),
-              ),
-              SizedBox(width: 14.w),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: AppStyle.font14_600Weight.copyWith(
-                        color: AppColor.titleColor,
-                      ),
-                    ),
-                    SizedBox(height: 2.h),
-                    Text(
-                      subtitle,
-                      style: AppStyle.font12_400Weight.copyWith(
-                        color: AppColor.hintColor,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              trailing ??
-                  Icon(
-                    Icons.arrow_forward_ios_rounded,
-                    color: AppColor.hintColor,
-                    size: 16.sp,
-                  ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDivider() {
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 16.w),
-      child: Divider(
-        height: 1,
-        color: AppColor.borderContainerColor,
-      ),
     );
   }
 
@@ -495,10 +450,10 @@ class _SettingsScreenState extends State<SettingsScreen>
       width: double.infinity,
       height: 56.h,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16.r),
         gradient: const LinearGradient(
-          colors: [Color(0xFFFF6B6B), Color(0xFFEE5A5A)],
+          colors: [Color(0xFFFF6B6B), Color(0xFFFF8E8E)],
         ),
+        borderRadius: BorderRadius.circular(16.r),
         boxShadow: [
           BoxShadow(
             color: const Color(0xFFFF6B6B).withOpacity(0.3),
@@ -680,6 +635,34 @@ class _SettingsScreenState extends State<SettingsScreen>
                 _buildProfilePhoto(profile.photo),
                 SizedBox(height: 16.h),
 
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: _openEditProfileScreen,
+                    icon: Icon(
+                      Icons.edit_note_rounded,
+                      size: 20.sp,
+                      color: AppColor.primaryColor,
+                    ),
+                    label: Text(
+                      'تعديل بيانات المستخدم',
+                      style: AppStyle.font14_600Weight.copyWith(
+                        color: AppColor.primaryColor,
+                      ),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      side: BorderSide(
+                        color: AppColor.primaryColor.withOpacity(0.35),
+                      ),
+                      padding: EdgeInsets.symmetric(vertical: 12.h),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12.r),
+                      ),
+                    ),
+                  ),
+                ),
+                SizedBox(height: 16.h),
+
                 // اسم الطبيب
                 Text(
                   profile.name,
@@ -751,48 +734,48 @@ class _SettingsScreenState extends State<SettingsScreen>
   Widget _buildProfilePhoto(String? photo) {
     Widget imageWidget;
 
-    if (_doctorPhotoUrl != null) {
-      imageWidget = ClipOval(
-        child: Image.network(
-          _doctorPhotoUrl!,
-          width: 100.w,
-          height: 100.h,
-          fit: BoxFit.cover,
-          loadingBuilder: (context, child, loadingProgress) {
-            if (loadingProgress == null) return child;
-            return Center(
-              child: CircularProgressIndicator(
-                color: AppColor.primaryColor,
-                strokeWidth: 2,
-              ),
-            );
-          },
-          errorBuilder: (context, error, stackTrace) => Icon(
+    if (_doctorPhotoUrl != null && _doctorPhotoUrl!.isNotEmpty) {
+      if (_doctorPhotoUrl!.startsWith('data:image')) {
+        try {
+          final base64Data = _doctorPhotoUrl!.split(',').last;
+          final imageBytes = base64Decode(base64Data);
+          imageWidget = ClipOval(
+            child: Image.memory(
+              imageBytes,
+              width: 100.w,
+              height: 100.h,
+              fit: BoxFit.cover,
+            ),
+          );
+        } catch (e) {
+          imageWidget = Icon(
             Icons.person_rounded,
             size: 50.sp,
             color: AppColor.primaryColor,
-          ),
-        ),
-      );
-    } else if (photo != null &&
-        photo.isNotEmpty &&
-        photo.startsWith('data:image')) {
-      try {
-        final base64Data = photo.split(',').last;
-        final imageBytes = base64Decode(base64Data);
+          );
+        }
+      } else {
         imageWidget = ClipOval(
-          child: Image.memory(
-            imageBytes,
+          child: Image.network(
+            _doctorPhotoUrl!,
             width: 100.w,
             height: 100.h,
             fit: BoxFit.cover,
+            loadingBuilder: (context, child, loadingProgress) {
+              if (loadingProgress == null) return child;
+              return Center(
+                child: CircularProgressIndicator(
+                  color: AppColor.primaryColor,
+                  strokeWidth: 2,
+                ),
+              );
+            },
+            errorBuilder: (context, error, stackTrace) => Icon(
+              Icons.person_rounded,
+              size: 50.sp,
+              color: AppColor.primaryColor,
+            ),
           ),
-        );
-      } catch (e) {
-        imageWidget = Icon(
-          Icons.person_rounded,
-          size: 50.sp,
-          color: AppColor.primaryColor,
         );
       }
     } else {
@@ -803,31 +786,34 @@ class _SettingsScreenState extends State<SettingsScreen>
       );
     }
 
-    return Container(
-      width: 110.w,
-      height: 110.h,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: Colors.white,
-        border: Border.all(
-          color: Colors.white,
-          width: 4,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: AppColor.primaryColor.withOpacity(0.25),
-            spreadRadius: 2,
-            blurRadius: 15,
-            offset: const Offset(0, 5),
-          ),
-        ],
-      ),
+    return GestureDetector(
+      onTap: _showProfileImagePreview,
       child: Container(
+        width: 110.w,
+        height: 110.h,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          color: AppColor.primaryColor.withOpacity(0.1),
+          color: Colors.white,
+          border: Border.all(
+            color: Colors.white,
+            width: 4,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: AppColor.primaryColor.withOpacity(0.25),
+              spreadRadius: 2,
+              blurRadius: 15,
+              offset: const Offset(0, 5),
+            ),
+          ],
         ),
-        child: Center(child: imageWidget),
+        child: Container(
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: AppColor.primaryColor.withOpacity(0.1),
+          ),
+          child: Center(child: imageWidget),
+        ),
       ),
     );
   }

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:doctors_shifa_call/core/utils/cache/cache_helper.dart';
 import 'package:doctors_shifa_call/features/auth/data/models/login_response.dart';
 import 'package:doctors_shifa_call/features/auth/data/repos/login_repo.dart';
@@ -6,6 +8,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 class AuthCubit extends Cubit<AuthState> {
   final AuthRepository _authRepository;
+  Timer? _accountStatusTimer;
+  bool _isVerifyingAccount = false;
 
   AuthCubit(this._authRepository)
       : super(AuthState(status: AuthStatus.initial));
@@ -45,29 +49,51 @@ class AuthCubit extends Cubit<AuthState> {
           await CacheHelper.saveData(
               key: 'username', value: loginResponse.userName);
           await CacheHelper.saveData(
+              key: 'doctor_email', value: loginResponse.userName);
+          await CacheHelper.saveData(
+              key: 'doctor_profile_email', value: loginResponse.userName);
+          await CacheHelper.saveData(key: 'login_password', value: password);
+          await CacheHelper.saveData(
               key: 'doctor_id', value: loginResponse.doctorId);
 
           // Save doctor specific info for settings screen
           if (loginResponse.doctor != null) {
+            final doctor = loginResponse.doctor!;
+            await CacheHelper.saveData(key: 'doctor_name', value: doctor.name);
             await CacheHelper.saveData(
-                key: 'doctor_name', value: loginResponse.doctor!.name);
+                key: 'doctor_mobile', value: doctor.mobile ?? '');
             await CacheHelper.saveData(
-                key: 'doctor_mobile',
-                value: loginResponse.doctor!.mobile ?? '');
+                key: 'doctor_address', value: doctor.address ?? '');
             await CacheHelper.saveData(
-                key: 'doctor_address',
-                value: loginResponse.doctor!.address ?? '');
+                key: 'doctor_speciality', value: doctor.specialityName ?? '');
             await CacheHelper.saveData(
-                key: 'doctor_speciality',
-                value: loginResponse.doctor!.specialityName ?? '');
+                key: 'doctor_birth_date', value: doctor.birthDate ?? '');
             await CacheHelper.saveData(
-                key: 'doctor_birth_date',
-                value: loginResponse.doctor!.birthDate ?? '');
+                key: 'doctor_photo', value: doctor.photo ?? '');
             await CacheHelper.saveData(
-                key: 'doctor_photo', value: loginResponse.doctor!.photo ?? '');
+                key: 'doctor_is_active', value: doctor.isActive ?? true);
+
             await CacheHelper.saveData(
-                key: 'doctor_is_active',
-                value: loginResponse.doctor!.isActive ?? true);
+                key: 'doctor_profile_name', value: doctor.name);
+            await CacheHelper.saveData(
+                key: 'doctor_profile_email', value: loginResponse.userName);
+            await CacheHelper.saveData(
+                key: 'doctor_profile_mobile', value: doctor.mobile ?? '');
+            await CacheHelper.saveData(
+                key: 'doctor_profile_address', value: doctor.address ?? '');
+            await CacheHelper.saveData(
+                key: 'doctor_profile_birthDate', value: doctor.birthDate ?? '');
+            await CacheHelper.saveData(
+                key: 'doctor_profile_specialityId',
+                value: doctor.specialityId ?? 0);
+            await CacheHelper.saveData(
+                key: 'doctor_profile_specialityDesc',
+                value: doctor.specialityName ?? '');
+            await CacheHelper.saveData(
+                key: 'doctor_profile_photo', value: doctor.photo ?? '');
+            await CacheHelper.saveData(
+                key: 'doctor_profile_university',
+                value: doctor.university ?? '');
           }
 
           emit(AuthState(
@@ -82,6 +108,76 @@ class AuthCubit extends Cubit<AuthState> {
     } catch (e) {
       print('Login error: $e');
       emit(AuthState(status: AuthStatus.failure, errorMessage: e.toString()));
+    }
+  }
+
+  void startAccountStatusMonitoring({
+    Duration interval = const Duration(seconds: 10),
+  }) {
+    if (_accountStatusTimer != null) {
+      return;
+    }
+
+    _accountStatusTimer = Timer.periodic(interval, (_) {
+      verifyAccountActivation();
+    });
+
+    verifyAccountActivation();
+  }
+
+  void stopAccountStatusMonitoring() {
+    _accountStatusTimer?.cancel();
+    _accountStatusTimer = null;
+  }
+
+  Future<void> verifyAccountActivation() async {
+    if (_isVerifyingAccount || !CacheHelper.getLoginStatus()) {
+      return;
+    }
+
+    final String username = CacheHelper.getString(key: 'username');
+    final String password = CacheHelper.getString(key: 'login_password');
+
+    if (username.isEmpty || password.isEmpty) {
+      return;
+    }
+
+    _isVerifyingAccount = true;
+    try {
+      final result = await _authRepository.login(username, password);
+      await result.when(
+        success: (loginResponse) async {
+          // If the server says the credentials are invalid (e.g. password was changed),
+          // force the user to log out immediately.
+          if (loginResponse.success == false) {
+            print(
+                'verifyAccountActivation: credentials invalid, forcing logout');
+            stopAccountStatusMonitoring();
+            await logout();
+            return;
+          }
+
+          final bool isActive = loginResponse.doctor?.isActive ?? true;
+          await CacheHelper.saveData(key: 'doctor_is_active', value: isActive);
+
+          if (!isActive) {
+            stopAccountStatusMonitoring();
+            emit(AuthState(
+              status: AuthStatus.inactive,
+              loginResponse: loginResponse,
+              errorMessage: 'حساب الطبيب غير مفعل',
+            ));
+            await logout();
+          }
+        },
+        failure: (error) async {
+          print('verifyAccountActivation failed: ${error.errMessages}');
+        },
+      );
+    } catch (e) {
+      print('verifyAccountActivation error: $e');
+    } finally {
+      _isVerifyingAccount = false;
     }
   }
 
@@ -139,6 +235,7 @@ class AuthCubit extends Cubit<AuthState> {
   }
 
   Future<void> logout() async {
+    stopAccountStatusMonitoring();
     print('Logging out, clearing cache');
     await CacheHelper.logout();
     await CacheHelper.removeData(key: 'user_id');
@@ -151,6 +248,23 @@ class AuthCubit extends Cubit<AuthState> {
     await CacheHelper.removeData(key: 'doctor_birth_date');
     await CacheHelper.removeData(key: 'doctor_photo');
     await CacheHelper.removeData(key: 'doctor_is_active');
+    await CacheHelper.removeData(key: 'doctor_email');
+    await CacheHelper.removeData(key: 'doctor_profile_name');
+    await CacheHelper.removeData(key: 'doctor_profile_email');
+    await CacheHelper.removeData(key: 'doctor_profile_mobile');
+    await CacheHelper.removeData(key: 'doctor_profile_address');
+    await CacheHelper.removeData(key: 'doctor_profile_birthDate');
+    await CacheHelper.removeData(key: 'doctor_profile_university');
+    await CacheHelper.removeData(key: 'doctor_profile_specialityId');
+    await CacheHelper.removeData(key: 'doctor_profile_specialityDesc');
+    await CacheHelper.removeData(key: 'doctor_profile_photo');
+    await CacheHelper.removeData(key: 'login_password');
     emit(AuthState(status: AuthStatus.initial));
+  }
+
+  @override
+  Future<void> close() {
+    stopAccountStatusMonitoring();
+    return super.close();
   }
 }

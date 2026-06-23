@@ -18,4 +18,7 @@ class ApiConstants {
   static const String registerDoctorEndpoint = 'RegisterDoctor/RegisterDoctor';
   static const String getSpecialtyDoctorEndpoint =
       'RegisterDoctor/GetSpecialtyDoctor';
+
+  // Real endpoint for doctor profile updates.
+  static const String updateDoctorEndpoint = 'RegisterDoctor/updateDoctor';
 }

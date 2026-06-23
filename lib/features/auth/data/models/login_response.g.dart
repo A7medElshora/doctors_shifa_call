@@ -54,6 +54,7 @@ DoctorData _$DoctorDataFromJson(Map<String, dynamic> json) => DoctorData(
       photo: json['Photo'] as String?,
       birthDate: json['BirthDate'] as String?,
       isActive: json['IsActive'] as bool?,
+      university: json['University'] as String?,
     );
 
 Map<String, dynamic> _$DoctorDataToJson(DoctorData instance) =>
@@ -67,4 +68,5 @@ Map<String, dynamic> _$DoctorDataToJson(DoctorData instance) =>
       'Photo': instance.photo,
       'BirthDate': instance.birthDate,
       'IsActive': instance.isActive,
+      'University': instance.university,
     };

@@ -43,6 +43,15 @@ class RegisterDoctorRequest {
   @JsonKey(name: 'AdditionalPhotos')
   final List<AdditionalPhoto> additionalPhotos;
 
+  @JsonKey(name: 'DoctorId')
+  final int? doctorId;
+
+  @JsonKey(name: 'DateWork')
+  final String? dateWork;
+
+  @JsonKey(name: 'AboutDoctor')
+  final String? aboutDoctor;
+
   RegisterDoctorRequest({
     required this.name,
     required this.email,
@@ -57,6 +66,9 @@ class RegisterDoctorRequest {
     required this.nationalIdPhotoBack,
     required this.membershipCard,
     required this.additionalPhotos,
+    this.doctorId,
+    this.dateWork,
+    this.aboutDoctor,
   });
 
   factory RegisterDoctorRequest.fromJson(Map<String, dynamic> json) =>

@@ -221,6 +221,39 @@ class _ApiService implements ApiService {
   }
 
   @override
+  Future<RegisterDoctorResponse> updateDoctor(
+    RegisterDoctorRequest request, {
+    CancelToken? cancelToken,
+  }) async {
+    final _extra = <String, dynamic>{};
+    final queryParameters = <String, dynamic>{};
+    queryParameters.removeWhere((k, v) => v == null);
+    final _headers = <String, dynamic>{};
+    final _data = <String, dynamic>{};
+    _data.addAll(request.toJson());
+    final _options = _setStreamType<RegisterDoctorResponse>(
+      Options(method: 'POST', headers: _headers, extra: _extra)
+          .compose(
+            _dio.options,
+            'RegisterDoctor/updateDoctor',
+            queryParameters: queryParameters,
+            data: _data,
+            cancelToken: cancelToken,
+          )
+          .copyWith(baseUrl: _combineBaseUrls(_dio.options.baseUrl, baseUrl)),
+    );
+    final _result = await _dio.fetch<Map<String, dynamic>>(_options);
+    late RegisterDoctorResponse _value;
+    try {
+      _value = RegisterDoctorResponse.fromJson(_result.data!);
+    } on Object catch (e, s) {
+      errorLogger?.logError(e, s, _options);
+      rethrow;
+    }
+    return _value;
+  }
+
+  @override
   Future<List<TerminationStatus>> getTerminationStatuses() async {
     final _extra = <String, dynamic>{};
     final queryParameters = <String, dynamic>{};

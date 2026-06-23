@@ -1,7 +1,9 @@
 import 'dart:io';
+import 'dart:convert';
 
 import 'package:doctors_shifa_call/core/utils/constant/app_color.dart';
 import 'package:doctors_shifa_call/core/utils/constant/app_style.dart';
+import 'package:doctors_shifa_call/features/auth/data/models/doctor_profile.dart';
 import 'package:doctors_shifa_call/features/auth/data/models/specialty_model.dart';
 import 'package:doctors_shifa_call/features/auth/presentation/cubits/registration_cubit.dart';
 import 'package:doctors_shifa_call/features/auth/presentation/cubits/registration_state.dart';
@@ -18,7 +20,14 @@ import 'package:dio/dio.dart';
 import 'package:doctors_shifa_call/core/widgets/loading_overlay.dart';
 
 class RegistrationScreen extends StatefulWidget {
-  const RegistrationScreen({super.key});
+  final bool isEditMode;
+  final DoctorProfile? initialProfile;
+
+  const RegistrationScreen({
+    super.key,
+    this.isEditMode = false,
+    this.initialProfile,
+  });
 
   @override
   State<RegistrationScreen> createState() => _RegistrationScreenState();
@@ -46,24 +55,69 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
 
   // Image/File storage
   File? _profilePhoto;
+  String? _existingProfilePhoto;
   File? _idFrontImage;
   File? _idBackImage;
   File? _membershipCard;
   final List<File> _certificateFiles = [];
 
   final ImagePicker _picker = ImagePicker();
+  bool _specialtyInitialized = false;
 
   @override
   void initState() {
     super.initState();
+    _prefillDataIfNeeded();
     // Load specialties when screen opens
     context.read<RegistrationCubit>().loadSpecialties();
+  }
+
+  void _prefillDataIfNeeded() {
+    final profile = widget.initialProfile;
+    if (profile == null) {
+      return;
+    }
+    nameController.text = profile.name;
+    emailController.text = profile.email;
+    phoneController.text = profile.mobile;
+    addressController.text = profile.address;
+    universityController.text = profile.university;
+    _existingProfilePhoto = profile.photo;
+
+    if (profile.birthDate.isNotEmpty) {
+      try {
+        final birthDate = DateTime.parse(profile.birthDate);
+        final now = DateTime.now();
+        var age = now.year - birthDate.year;
+        if (now.month < birthDate.month ||
+            (now.month == birthDate.month && now.day < birthDate.day)) {
+          age--;
+        }
+        if (age > 0) {
+          ageController.text = age.toString();
+        }
+      } catch (_) {}
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<RegistrationCubit, RegistrationState>(
       builder: (context, state) {
+        if (!_specialtyInitialized &&
+            widget.initialProfile != null &&
+            state.specialties.isNotEmpty) {
+          SpecialtyModel? matchedSpecialty;
+          for (final item in state.specialties) {
+            if (item.specialityId == widget.initialProfile!.specialityId) {
+              matchedSpecialty = item;
+              break;
+            }
+          }
+          _selectedSpecialty = matchedSpecialty;
+          _specialtyInitialized = true;
+        }
+
         return Scaffold(
           resizeToAvoidBottomInset: true,
           body: Stack(
@@ -105,19 +159,20 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                 top: 250.h,
                 child: Container(
                   decoration: BoxDecoration(
-                      color: AppColor.containerColor,
-                      borderRadius: const BorderRadius.only(
-                        topLeft: Radius.circular(50),
-                        topRight: Radius.circular(50),
-                      ),
-                      ),
+                    color: AppColor.containerColor,
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(50),
+                      topRight: Radius.circular(50),
+                    ),
+                  ),
                   child: BlocConsumer<RegistrationCubit, RegistrationState>(
                     listener: (context, state) {
                       if (state.status == RegistrationStatus.success) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
-                            content: const Text(
-                                'تم إرسال طلب التسجيل بنجاح! سيتم مراجعته قريباً'),
+                            content: Text(widget.isEditMode
+                                ? 'تم حفظ التعديلات بنجاح'
+                                : 'تم إرسال طلب التسجيل بنجاح! سيتم مراجعته قريباً'),
                             backgroundColor: AppColor.primaryColor,
                             behavior: SnackBarBehavior.floating,
                             shape: RoundedRectangleBorder(
@@ -131,8 +186,10 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                       } else if (state.status == RegistrationStatus.failure) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
-                            content: Text(
-                                state.errorMessage ?? 'حدث خطأ في التسجيل'),
+                            content: Text(state.errorMessage ??
+                                (widget.isEditMode
+                                    ? 'حدث خطأ أثناء تعديل البيانات'
+                                    : 'حدث خطأ في التسجيل')),
                             backgroundColor: AppColor.redButtonColor,
                             behavior: SnackBarBehavior.floating,
                             shape: RoundedRectangleBorder(
@@ -154,7 +211,9 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                             children: [
                               // Title
                               Text(
-                                'تسجيل حساب جديد',
+                                widget.isEditMode
+                                    ? 'تعديل بيانات الحساب'
+                                    : 'تسجيل حساب جديد',
                                 style: AppStyle.font20_600Weight.copyWith(
                                   color: const Color(0xFF1A3C34),
                                   fontSize: 24.sp,
@@ -449,7 +508,9 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                                           ),
                                         )
                                       : Text(
-                                          'تسجيل',
+                                          widget.isEditMode
+                                              ? 'حفظ التعديلات'
+                                              : 'تسجيل',
                                           style: AppStyle.font18_600Weight
                                               .copyWith(color: Colors.white),
                                         ),
@@ -473,30 +534,31 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                               SizedBox(height: 20.h),
 
                               // Login Link
-                              RichText(
-                                text: TextSpan(
-                                  text: 'لديك حساب بالفعل؟ ',
-                                  style: AppStyle.font14_400Weight.copyWith(
-                                    color: const Color(0xFF58595B),
-                                  ),
-                                  children: [
-                                    WidgetSpan(
-                                      child: GestureDetector(
-                                        onTap: () => Navigator.pop(context),
-                                        child: Text(
-                                          'تسجيل الدخول',
-                                          style: AppStyle.font14_600Weight
-                                              .copyWith(
-                                            color: AppColor.primaryColor,
-                                            decoration:
-                                                TextDecoration.underline,
+                              if (!widget.isEditMode)
+                                RichText(
+                                  text: TextSpan(
+                                    text: 'لديك حساب بالفعل؟ ',
+                                    style: AppStyle.font14_400Weight.copyWith(
+                                      color: const Color(0xFF58595B),
+                                    ),
+                                    children: [
+                                      WidgetSpan(
+                                        child: GestureDetector(
+                                          onTap: () => Navigator.pop(context),
+                                          child: Text(
+                                            'تسجيل الدخول',
+                                            style: AppStyle.font14_600Weight
+                                                .copyWith(
+                                              color: AppColor.primaryColor,
+                                              decoration:
+                                                  TextDecoration.underline,
+                                            ),
                                           ),
                                         ),
                                       ),
-                                    ),
-                                  ],
+                                    ],
+                                  ),
                                 ),
-                              ),
                               SizedBox(height: 40.h),
                             ],
                           ),
@@ -538,20 +600,8 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                   color: AppColor.primaryColor.withOpacity(0.3),
                   width: 2,
                 ),
-                image: _profilePhoto != null
-                    ? DecorationImage(
-                        image: FileImage(_profilePhoto!),
-                        fit: BoxFit.cover,
-                      )
-                    : null,
               ),
-              child: _profilePhoto == null
-                  ? Icon(
-                      Icons.person,
-                      size: 50.sp,
-                      color: AppColor.primaryColor,
-                    )
-                  : null,
+              child: ClipOval(child: _buildCurrentProfilePhotoWidget()),
             ),
             Positioned(
               bottom: 0,
@@ -572,6 +622,55 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildCurrentProfilePhotoWidget() {
+    if (_profilePhoto != null) {
+      return Image.file(
+        _profilePhoto!,
+        fit: BoxFit.cover,
+        width: double.infinity,
+        height: double.infinity,
+      );
+    }
+
+    final photo = _existingProfilePhoto;
+    if (photo != null && photo.isNotEmpty) {
+      if (photo.startsWith('data:image')) {
+        try {
+          final base64Data = photo.split(',').last;
+          final bytes = base64Decode(base64Data);
+          return Image.memory(
+            bytes,
+            fit: BoxFit.cover,
+            width: double.infinity,
+            height: double.infinity,
+          );
+        } catch (_) {}
+      }
+
+      final resolvedPhotoUrl = photo.startsWith('http')
+          ? photo
+          : 'https://185.135.137.90:44302/doctor_images/$photo';
+
+      return Image.network(
+        resolvedPhotoUrl,
+        fit: BoxFit.cover,
+        width: double.infinity,
+        height: double.infinity,
+        errorBuilder: (_, __, ___) => Icon(
+          Icons.person,
+          size: 50.sp,
+          color: AppColor.primaryColor,
+        ),
+      );
+    }
+
+    return Icon(
+      Icons.person,
+      size: 50.sp,
+      color: AppColor.primaryColor,
     );
   }
 
@@ -658,8 +757,8 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
           ),
         ],
       ),
-      child: DropdownButtonFormField<SpecialtyModel>(
-        initialValue: _selectedSpecialty,
+      child: DropdownButtonFormField<int>(
+        initialValue: _selectedSpecialty?.specialityId,
         isExpanded: true,
         decoration: InputDecoration(
           disabledBorder: AppStyle.borderDone(),
@@ -683,8 +782,8 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
           ),
         ),
         items: state.specialties.map((specialty) {
-          return DropdownMenuItem<SpecialtyModel>(
-            value: specialty,
+          return DropdownMenuItem<int>(
+            value: specialty.specialityId,
             child: Text(
               specialty.specialityDesc,
               style: AppStyle.font14_400Weight.copyWith(
@@ -695,7 +794,18 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
         }).toList(),
         onChanged: (value) {
           setState(() {
-            _selectedSpecialty = value;
+            if (value == null) {
+              _selectedSpecialty = null;
+              return;
+            }
+
+            _selectedSpecialty = state.specialties.firstWhere(
+              (specialty) => specialty.specialityId == value,
+              orElse: () => SpecialtyModel(
+                specialityId: value,
+                specialityDesc: '',
+              ),
+            );
           });
         },
         validator: (value) {
@@ -1382,9 +1492,10 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
 
   void _handleRegister() {
     if (_formKey.currentState!.validate()) {
-      if (_idFrontImage == null ||
-          _idBackImage == null ||
-          _membershipCard == null) {
+      if (!widget.isEditMode &&
+          (_idFrontImage == null ||
+              _idBackImage == null ||
+              _membershipCard == null)) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: const Text('يجب رفع وجهي البطاقة وكارت النقابة'),
@@ -1423,23 +1534,43 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
       // Initialize cancel token
       _cancelToken = CancelToken();
 
-      // Call the registration API
-      context.read<RegistrationCubit>().registerDoctor(
-            name: nameController.text.trim(),
-            email: emailController.text.trim(),
-            password: passwordController.text,
-            mobile: phoneController.text.trim(),
-            address: addressController.text.trim(),
-            birthDate: birthDateString,
-            university: universityController.text.trim(),
-            specialityId: _selectedSpecialty!.specialityId,
-            photo: _profilePhoto,
-            nationalIdPhotoFront: _idFrontImage!,
-            nationalIdPhotoBack: _idBackImage!,
-            membershipCard: _membershipCard!,
-            additionalPhotos: _certificateFiles,
-            cancelToken: _cancelToken,
-          );
+      if (widget.isEditMode) {
+        context.read<RegistrationCubit>().updateDoctorProfile(
+              name: nameController.text.trim(),
+              email: emailController.text.trim(),
+              password: passwordController.text,
+              mobile: phoneController.text.trim(),
+              address: addressController.text.trim(),
+              birthDate: birthDateString,
+              university: universityController.text.trim(),
+              specialityId: _selectedSpecialty!.specialityId,
+              photo: _profilePhoto,
+              existingPhoto: widget.initialProfile?.photo,
+              nationalIdPhotoFront: _idFrontImage,
+              nationalIdPhotoBack: _idBackImage,
+              membershipCard: _membershipCard,
+              additionalPhotos: _certificateFiles,
+              cancelToken: _cancelToken,
+            );
+      } else {
+        // Call the registration API
+        context.read<RegistrationCubit>().registerDoctor(
+              name: nameController.text.trim(),
+              email: emailController.text.trim(),
+              password: passwordController.text,
+              mobile: phoneController.text.trim(),
+              address: addressController.text.trim(),
+              birthDate: birthDateString,
+              university: universityController.text.trim(),
+              specialityId: _selectedSpecialty!.specialityId,
+              photo: _profilePhoto,
+              nationalIdPhotoFront: _idFrontImage!,
+              nationalIdPhotoBack: _idBackImage!,
+              membershipCard: _membershipCard!,
+              additionalPhotos: _certificateFiles,
+              cancelToken: _cancelToken,
+            );
+      }
     }
   }
 

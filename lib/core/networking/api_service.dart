@@ -3,8 +3,6 @@ import 'package:doctors_shifa_call/features/home/data/models/booking/booking.dar
 import 'package:doctors_shifa_call/features/home/data/models/price/price_model.dart';
 import 'package:doctors_shifa_call/features/home/data/models/work_hour/day.dart';
 import 'package:doctors_shifa_call/features/home/data/models/work_hour/doctors_time_table.dart';
-import 'package:doctors_shifa_call/features/home/presentation/cubits/booking/termination_status_state.dart';
-import 'package:doctors_shifa_call/features/home/presentation/widgets/clinic_booking_screen.dart';
 import 'package:retrofit/retrofit.dart';
 import 'package:doctors_shifa_call/core/networking/api_constants.dart';
 import 'package:doctors_shifa_call/features/auth/data/models/login_response.dart';
@@ -55,6 +53,12 @@ abstract class ApiService {
   Future<void> updateDoctorPrices(
     @Body() PriceModel priceModel,
   );
+
+  @POST(ApiConstants.updateDoctorEndpoint)
+  Future<RegisterDoctorResponse> updateDoctor(
+    @Body() RegisterDoctorRequest request, {
+    @CancelRequest() CancelToken? cancelToken,
+  });
 
   @GET('reservations/get_termination_status')
   Future<List<TerminationStatus>> getTerminationStatuses();

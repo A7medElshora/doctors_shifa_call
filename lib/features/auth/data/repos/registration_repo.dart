@@ -9,4 +9,7 @@ abstract class RegistrationRepository {
   Future<ApiResult<RegisterDoctorResponse>> registerDoctor(
       RegisterDoctorRequest request,
       {CancelToken? cancelToken});
+  Future<ApiResult<RegisterDoctorResponse>> updateDoctorProfile(
+      RegisterDoctorRequest request,
+      {CancelToken? cancelToken});
 }

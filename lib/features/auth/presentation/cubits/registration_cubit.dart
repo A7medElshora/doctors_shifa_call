@@ -166,6 +166,126 @@ class RegistrationCubit extends Cubit<RegistrationState> {
     }
   }
 
+  Future<void> updateDoctorProfile({
+    required String name,
+    required String email,
+    required String password,
+    required String mobile,
+    required String address,
+    required String birthDate,
+    required String university,
+    required int specialityId,
+    required File? photo,
+    String? existingPhoto,
+    File? nationalIdPhotoFront,
+    File? nationalIdPhotoBack,
+    File? membershipCard,
+    required List<File> additionalPhotos,
+    CancelToken? cancelToken,
+  }) async {
+    emit(state.copyWith(status: RegistrationStatus.registering));
+
+    try {
+      // If a new photo file is chosen, send its base64.
+      // Otherwise, send an empty string so the server does not attempt to parse a filename as base64 and keeps the current image.
+      final apiPhoto = photo != null ? await _fileToBase64(photo) : '';
+      final frontBase64 = nationalIdPhotoFront != null
+          ? await _fileToBase64(nationalIdPhotoFront)
+          : '';
+      final backBase64 = nationalIdPhotoBack != null
+          ? await _fileToBase64(nationalIdPhotoBack)
+          : '';
+      final membershipBase64 =
+          membershipCard != null ? await _fileToBase64(membershipCard) : '';
+
+      final List<AdditionalPhoto> additionalPhotosList = [];
+      for (int i = 0; i < additionalPhotos.length; i++) {
+        final file = additionalPhotos[i];
+        final base64 = await _fileToBase64(file);
+        additionalPhotosList.add(AdditionalPhoto(
+          photoType: 'شهادة ${i + 1}',
+          photoBase64: base64,
+          fileName: 'certificate_${i + 1}.jpg',
+        ));
+      }
+
+      final request = RegisterDoctorRequest(
+        name: name,
+        email: email,
+        password: password,
+        mobile: mobile,
+        address: address,
+        birthDate: birthDate,
+        university: university,
+        specialityId: specialityId,
+        photo: apiPhoto,
+        nationalIdPhotoFront: frontBase64,
+        nationalIdPhotoBack: backBase64,
+        membershipCard: membershipBase64,
+        additionalPhotos: additionalPhotosList,
+        doctorId: CacheHelper.getInteger(key: 'doctor_id'),
+        dateWork: '',
+        aboutDoctor: '',
+      );
+
+      final result = await _registrationRepository.updateDoctorProfile(
+        request,
+        cancelToken: cancelToken,
+      );
+
+      result.when(
+        success: (_) async {
+          String specialityDesc = '';
+          if (state.specialties.isNotEmpty) {
+            try {
+              final specialty = state.specialties.firstWhere(
+                (s) => s.specialityId == specialityId,
+              );
+              specialityDesc = specialty.specialityDesc;
+            } catch (_) {
+              specialityDesc = state.specialties.first.specialityDesc;
+            }
+          }
+
+          // If a new photo was successfully uploaded, cache the new base64 representation.
+          // Otherwise, preserve the existing photo filename/base64 so the UI continues to render it.
+          final savedPhoto = photo != null
+              ? await _fileToBase64(photo)
+              : (existingPhoto ?? '');
+
+          final profile = DoctorProfile(
+            name: name,
+            email: email,
+            mobile: mobile,
+            address: address,
+            birthDate: birthDate,
+            university: university,
+            specialityId: specialityId,
+            specialityDesc: specialityDesc,
+            photo: savedPhoto,
+          );
+
+          await _saveDoctorProfile(profile);
+          emit(state.copyWith(
+            status: RegistrationStatus.success,
+            doctorProfile: profile,
+          ));
+        },
+        failure: (error) {
+          emit(state.copyWith(
+            status: RegistrationStatus.failure,
+            errorMessage: error.errMessages,
+          ));
+        },
+      );
+    } catch (e) {
+      emit(state.copyWith(
+        status: RegistrationStatus.failure,
+        errorMessage: e.toString(),
+      ));
+    }
+  }
+
   Future<String> _fileToBase64(File file) async {
     final bytes = await file.readAsBytes();
     final base64String = base64Encode(bytes);
@@ -193,6 +313,16 @@ class RegistrationCubit extends Cubit<RegistrationState> {
         value: profile.specialityDesc ?? '');
     await CacheHelper.saveData(
         key: 'doctor_profile_photo', value: profile.photo ?? '');
+
+    // Keep login cache keys in sync because settings screen reads these first.
+    await CacheHelper.saveData(key: 'doctor_name', value: profile.name);
+    await CacheHelper.saveData(key: 'doctor_mobile', value: profile.mobile);
+    await CacheHelper.saveData(key: 'doctor_address', value: profile.address);
+    await CacheHelper.saveData(
+        key: 'doctor_speciality', value: profile.specialityDesc ?? '');
+    await CacheHelper.saveData(
+        key: 'doctor_birth_date', value: profile.birthDate);
+    await CacheHelper.saveData(key: 'doctor_photo', value: profile.photo ?? '');
   }
 
   Future<DoctorProfile?> loadDoctorProfile() async {

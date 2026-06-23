@@ -24,6 +24,9 @@ RegisterDoctorRequest _$RegisterDoctorRequestFromJson(
       additionalPhotos: (json['AdditionalPhotos'] as List<dynamic>)
           .map((e) => AdditionalPhoto.fromJson(e as Map<String, dynamic>))
           .toList(),
+      doctorId: (json['DoctorId'] as num?)?.toInt(),
+      dateWork: json['DateWork'] as String?,
+      aboutDoctor: json['AboutDoctor'] as String?,
     );
 
 Map<String, dynamic> _$RegisterDoctorRequestToJson(
@@ -42,6 +45,9 @@ Map<String, dynamic> _$RegisterDoctorRequestToJson(
       'NationalIdPhotoBack': instance.nationalIdPhotoBack,
       'MembershipCard': instance.membershipCard,
       'AdditionalPhotos': instance.additionalPhotos,
+      'DoctorId': instance.doctorId,
+      'DateWork': instance.dateWork,
+      'AboutDoctor': instance.aboutDoctor,
     };
 
 AdditionalPhoto _$AdditionalPhotoFromJson(Map<String, dynamic> json) =>
