@@ -9,12 +9,14 @@ part 'intro_app_state.dart';
 class IntroAppCubit extends Cubit<IntroAppState> {
   IntroAppCubit() : super(IntroAppInitial());
 
-  void initApp() async {
+  Future<void> initApp() async {
     try {
+      await FRConfig.instance.setupRemoteConfig();
+
       if (await _isForceUpdateActivated) return;
 
       if (_isAppUnderMaintenance) return;
-    } on Exception catch (e) {
+    } catch (e) {
       debugPrint('GUBA :: IntroAppCubit :: initApp :: $e');
     }
 
@@ -27,6 +29,7 @@ class IntroAppCubit extends Cubit<IntroAppState> {
       final appLink = FRConfig.instance.appLink();
       debugPrint(
           'GUBA :: IntroAppCubit :: isUserForcedToUpdate :: $isUserForcedToUpdate');
+      debugPrint('GUBA :: IntroAppCubit :: appLink :: $appLink');
 
       if (isUserForcedToUpdate) {
         emit(ForceUpdate(appLink: appLink));
